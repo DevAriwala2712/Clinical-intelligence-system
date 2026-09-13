@@ -146,6 +146,14 @@ async function runSecurityTests() {
   });
   assertEqual(stealResult.status, 409, 'createProgram refuses to reassign a patient already owned by another clinician');
 
+  // ---- Task 3 (fix round 1): same clinician re-assigning a patient they
+  // already own must still succeed - the stealing guard must not block
+  // legitimate re-assignment by the SAME clinician who already owns the patient.
+  const legitimateReassignResult = await apiRequest('POST', '/api/programs', clinicianToken, {
+    patientId: 2, pathwayId: 1, exercises: [{ exerciseId: 1, sets: 3, repetitions: 10, orderNumber: 1 }],
+  });
+  assertEqual(legitimateReassignResult.status, 201, 'createProgram allows the same clinician to re-assign a patient they already own');
+
   printSummaryAndExit();
 }
 
