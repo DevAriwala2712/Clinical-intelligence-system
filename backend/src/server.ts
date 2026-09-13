@@ -23,8 +23,14 @@ app.use('/api', routes);
 // Basic health check so you can confirm the server is up: GET /health
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-// Catch-all error handler: if any controller throws, this returns a clean
-// 500 instead of crashing the whole server or leaking a stack trace.
+// Catch-all error handler: only catches errors passed to next(err) by
+// synchronous middleware, or from an async handler wrapped so its rejection
+// reaches next(). Express 4 does NOT route an unhandled rejection from a
+// plain `async function` route handler here on its own - such a rejection
+// is unhandled and crashes the whole process. None of the controllers in
+// this codebase are wrapped, so in practice this handler is currently
+// unreachable from controller code; treat it as defense for
+// synchronous/middleware errors only, not a safety net for async ones.
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });

@@ -158,6 +158,10 @@ export async function getSessionEvidence(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const sessionId = Number(req.params.id);
 
+  if (!Number.isInteger(sessionId) || sessionId <= 0) {
+    return res.status(400).json({ error: 'session id must be a positive integer' });
+  }
+
   const [ownershipRows] = await pool.query(
     `SELECT rs.id FROM rehab_sessions rs
      JOIN program_exercises pe ON rs.program_exercise_id = pe.id
@@ -204,6 +208,11 @@ export async function getSessionEvidence(req: AuthedRequest, res: Response) {
 export async function reviewSession(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const sessionId = Number(req.params.id);
+
+  if (!Number.isInteger(sessionId) || sessionId <= 0) {
+    return res.status(400).json({ error: 'session id must be a positive integer' });
+  }
+
   const { decision, correction, notes } = req.body;
 
   // Ownership check: this session must belong to one of THIS clinician's

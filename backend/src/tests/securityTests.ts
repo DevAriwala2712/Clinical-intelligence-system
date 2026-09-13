@@ -71,6 +71,7 @@ async function runSecurityTests() {
     status: 'VALID',
     overallScore: 80,
   });
+  assertEqual(uploadResult.status, 201, 'test setup: patient can upload a session to their own program_exercise');
   const realSessionId = uploadResult.body.sessionId;
 
   const uniqueEmail = `reviewer-test-${Date.now()}@demo.com`;
@@ -149,8 +150,28 @@ async function runSecurityTests() {
   // ---- Task 3 (fix round 1): same clinician re-assigning a patient they
   // already own must still succeed - the stealing guard must not block
   // legitimate re-assignment by the SAME clinician who already owns the patient.
+  // Register a throwaway patient this test owns entirely, so the
+  // same-clinician re-assignment check doesn't mutate the shared demo
+  // patient's (id 2) real program count on every test run.
+  const throwawayPatientEmail = `throwaway-patient-${Date.now()}@demo.com`;
+  const throwawayPatientRegisterResult = await apiRequest('POST', '/api/auth/register', '', {
+    name: 'Throwaway Patient', email: throwawayPatientEmail, password: 'DemoPass123', role: 'patient',
+  });
+  const throwawayPatientId = throwawayPatientRegisterResult.body.user.id;
+
+  // First assignment: the throwaway patient has no clinician yet, so this
+  // must succeed (201).
+  const firstAssignResult = await apiRequest('POST', '/api/programs', clinicianToken, {
+    patientId: throwawayPatientId, pathwayId: 1, exercises: [{ exerciseId: 1, sets: 3, repetitions: 10, orderNumber: 1 }],
+  });
+  assertEqual(firstAssignResult.status, 201, 'createProgram lets a clinician assign a patient with no existing clinician');
+
+  // Second assignment, same clinician re-assigning the SAME patient they now
+  // already own - this is the actual same-clinician-reassignment branch
+  // under test, and must also succeed (201), never blocked by the
+  // patient-stealing guard.
   const legitimateReassignResult = await apiRequest('POST', '/api/programs', clinicianToken, {
-    patientId: 2, pathwayId: 1, exercises: [{ exerciseId: 1, sets: 3, repetitions: 10, orderNumber: 1 }],
+    patientId: throwawayPatientId, pathwayId: 1, exercises: [{ exerciseId: 1, sets: 3, repetitions: 10, orderNumber: 1 }],
   });
   assertEqual(legitimateReassignResult.status, 201, 'createProgram allows the same clinician to re-assign a patient they already own');
 
@@ -184,6 +205,18 @@ async function runSecurityTests() {
     { newRepetitions: firstExercise.repetitions + 5 }
   );
   assertEqual(approve2.body.status, 'MODIFIED', 'approving a suggestion with a changed repetition count becomes MODIFIED');
+
+  // Restore the original repetitions value after proving the MODIFIED
+  // path works, so this test doesn't permanently drift the shared seed
+  // data's sets/reps on every run.
+  const restoreSuggestion = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
+    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    suggestion: 'Restore original repetitions', reason: 'security test cleanup',
+  });
+  await apiRequest(
+    'POST', `/api/progression-suggestions/${restoreSuggestion.body.suggestionId}/approve`, clinicianToken,
+    { newRepetitions: firstExercise.repetitions }
+  );
 
   // ---- Task 5: uploadSession must validate pain/discomfort/difficulty
   // ranges and overallScore bounds, before it ever looks at ownership. ----

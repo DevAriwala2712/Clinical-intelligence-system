@@ -70,6 +70,11 @@ export async function listPendingSuggestions(req: AuthedRequest, res: Response) 
 export async function approveSuggestion(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const suggestionId = Number(req.params.id);
+
+  if (!Number.isInteger(suggestionId) || suggestionId <= 0) {
+    return res.status(400).json({ error: 'suggestion id must be a positive integer' });
+  }
+
   const { newSets, newRepetitions, note } = req.body;
 
   const [suggestionRows] = await pool.query(
@@ -125,6 +130,10 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
 export async function rejectSuggestion(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const suggestionId = Number(req.params.id);
+
+  if (!Number.isInteger(suggestionId) || suggestionId <= 0) {
+    return res.status(400).json({ error: 'suggestion id must be a positive integer' });
+  }
 
   const [rows] = await pool.query(
     `SELECT ps.id FROM progression_suggestions ps
