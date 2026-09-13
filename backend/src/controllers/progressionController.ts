@@ -16,10 +16,22 @@ import { pool } from '../db/pool';
  * records the resulting suggestion for the clinician to see).
  */
 export async function createSuggestion(req: AuthedRequest, res: Response) {
+  const patientId = req.user!.id;
   const { programId, exerciseId, suggestion, reason } = req.body;
 
   if (!programId || !exerciseId || !suggestion || !reason) {
     return res.status(400).json({ error: 'programId, exerciseId, suggestion, and reason are required' });
+  }
+
+  // Ownership check: this program must belong to THIS patient - never trust
+  // a programId supplied by the client without checking who it belongs to
+  // (Section 91/92).
+  const [programRows] = await pool.query(
+    'SELECT id FROM rehabilitation_programs WHERE id = ? AND patient_id = ?',
+    [programId, patientId]
+  );
+  if ((programRows as any[]).length === 0) {
+    return res.status(403).json({ error: 'This program does not belong to you' });
   }
 
   const [result] = await pool.query(

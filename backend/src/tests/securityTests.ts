@@ -94,6 +94,41 @@ async function runSecurityTests() {
     'reviewSession rejects a real session belonging to a different clinician\'s patient'
   );
 
+  // ---- Task 2: createSuggestion must reject a program the patient doesn't own ----
+  // Nonexistent programId (999999) - proves rows-affected-by-nonexistent-id is
+  // zero, but a broken "existence only" check with no real ownership logic
+  // would also pass this case (see the cross-tenant case below).
+  const suggestionResult = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
+    programId: 999999, exerciseId: 1, suggestion: 'test', reason: 'security test',
+  });
+  assertEqual(suggestionResult.status, 403, 'createSuggestion rejects a program the patient does not own');
+
+  // ---- Task 2 (cross-tenant): createSuggestion must reject a program that
+  // DOES exist but belongs to a DIFFERENT patient. programId 1 is
+  // patient@demo.com's real, existing program - a brand-new second patient
+  // must not be able to create a suggestion against it. This proves the
+  // ownership filter itself is doing real work, not just an existence check.
+  const uniquePatientEmail = `patient2-test-${Date.now()}@demo.com`;
+  const patientRegisterResult = await apiRequest('POST', '/api/auth/register', '', {
+    name: 'Patient Two',
+    email: uniquePatientEmail,
+    password: 'DemoPass123',
+    role: 'patient',
+  });
+  const otherPatientToken = patientRegisterResult.body.token;
+
+  const crossTenantSuggestionResult = await apiRequest(
+    'POST',
+    '/api/progression-suggestions',
+    otherPatientToken,
+    { programId: 1, exerciseId: 1, suggestion: 'test', reason: 'security test' }
+  );
+  assertEqual(
+    crossTenantSuggestionResult.status,
+    403,
+    'createSuggestion rejects a real program belonging to a different patient'
+  );
+
   printSummaryAndExit();
 }
 
