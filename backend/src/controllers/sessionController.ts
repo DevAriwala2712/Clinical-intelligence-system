@@ -186,6 +186,20 @@ export async function reviewSession(req: AuthedRequest, res: Response) {
   const sessionId = Number(req.params.id);
   const { decision, correction, notes } = req.body;
 
+  // Ownership check: this session must belong to one of THIS clinician's
+  // patients, via rehab_sessions -> program_exercises -> rehabilitation_programs.
+  // Mirrors the same pattern already used in getSessionEvidence above.
+  const [ownershipRows] = await pool.query(
+    `SELECT rs.id FROM rehab_sessions rs
+     JOIN program_exercises pe ON rs.program_exercise_id = pe.id
+     JOIN rehabilitation_programs rp ON pe.program_id = rp.id
+     WHERE rs.id = ? AND rp.clinician_id = ?`,
+    [sessionId, clinicianId]
+  );
+  if ((ownershipRows as any[]).length === 0) {
+    return res.status(403).json({ error: 'Not your session to review' });
+  }
+
   await pool.query(
     `INSERT INTO clinician_reviews (session_id, clinician_id, decision, correction, notes)
      VALUES (?, ?, ?, ?, ?)`,
