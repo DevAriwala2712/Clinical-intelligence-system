@@ -185,6 +185,18 @@ async function runSecurityTests() {
   );
   assertEqual(approve2.body.status, 'MODIFIED', 'approving a suggestion with a changed repetition count becomes MODIFIED');
 
+  // ---- Task 5: uploadSession must validate pain/discomfort/difficulty
+  // ranges and overallScore bounds, before it ever looks at ownership. ----
+  const badPainResult = await apiRequest('POST', '/api/sessions', patientToken, {
+    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', pain: 15, overallScore: 80,
+  });
+  assertEqual(badPainResult.status, 400, 'uploadSession rejects a pain rating above 10');
+
+  const badScoreResult = await apiRequest('POST', '/api/sessions', patientToken, {
+    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', overallScore: 250,
+  });
+  assertEqual(badScoreResult.status, 400, 'uploadSession rejects an overallScore above 100');
+
   printSummaryAndExit();
 }
 

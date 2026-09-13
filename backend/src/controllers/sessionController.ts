@@ -39,6 +39,26 @@ export async function uploadSession(req: AuthedRequest, res: Response) {
     return res.status(400).json({ error: 'programExerciseId, sessionDate, and status are required' });
   }
 
+  // Input validation: reject obviously-invalid values before touching the
+  // database (Section 131 - do not accept obviously invalid values). Pain
+  // and discomfort are 0-10, difficulty is 1-10, per the local SQLite
+  // schema's own documented ranges.
+  if (pain !== undefined && pain !== null && (pain < 0 || pain > 10)) {
+    return res.status(400).json({ error: 'pain must be between 0 and 10' });
+  }
+  if (discomfort !== undefined && discomfort !== null && (discomfort < 0 || discomfort > 10)) {
+    return res.status(400).json({ error: 'discomfort must be between 0 and 10' });
+  }
+  if (difficulty !== undefined && difficulty !== null && (difficulty < 1 || difficulty > 10)) {
+    return res.status(400).json({ error: 'difficulty must be between 1 and 10' });
+  }
+  // A VALID session must carry a real, in-range score - a wrong score is
+  // worse than no score (Section 143), so we refuse an out-of-range one
+  // rather than storing it.
+  if (status === 'VALID' && (typeof overallScore !== 'number' || overallScore < 0 || overallScore > 100)) {
+    return res.status(400).json({ error: 'overallScore must be a number between 0 and 100 for a VALID session' });
+  }
+
   // Ownership check: the program_exercise being reported on must actually
   // belong to a program that belongs to THIS patient.
   const [ownershipRows] = await pool.query(
