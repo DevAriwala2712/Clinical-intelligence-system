@@ -129,6 +129,23 @@ async function runSecurityTests() {
     'createSuggestion rejects a real program belonging to a different patient'
   );
 
+  // ---- Task 3: createProgram must not let a different clinician steal a
+  // patient who is already assigned to another clinician. Register a
+  // brand-new clinician account so this test doesn't depend on a second
+  // clinician existing in the seed data.
+  const intruderEmail = `intruder-${Date.now()}@demo.com`;
+  await apiRequest('POST', '/api/auth/register', '', {
+    name: 'Dr. Intruder', email: intruderEmail, password: 'DemoPass123', role: 'clinician',
+  });
+  const intruderToken = await login(intruderEmail, 'DemoPass123');
+
+  // patient@demo.com is already assigned to clinician@demo.com by the seed
+  // data (seed.ts creates a program for them) - so this SHOULD be refused.
+  const stealResult = await apiRequest('POST', '/api/programs', intruderToken, {
+    patientId: 2, pathwayId: 1, exercises: [{ exerciseId: 1, sets: 3, repetitions: 10, orderNumber: 1 }],
+  });
+  assertEqual(stealResult.status, 409, 'createProgram refuses to reassign a patient already owned by another clinician');
+
   printSummaryAndExit();
 }
 
