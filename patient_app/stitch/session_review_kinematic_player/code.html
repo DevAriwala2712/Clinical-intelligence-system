@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-secondary': '#ffffff', 'primary-fixed': '#cce5ff', 'error': '#ba1a1a', 'on-tertiary-fixed': '#001f26', 'surface-bright': '#f8f9ff', 'surface-dim': '#cbdbf5', 'on-secondary-fixed-variant': '#3323cc', 'error-container': '#ffdad6', 'tertiary': '#006577', 'outline-variant': '#bfc7d2', 'primary': '#006194', 'surface-container-lowest': '#ffffff', 'surface-tint': '#006398', 'on-secondary-container': '#fffbff', 'secondary': '#4b41e1', 'tertiary-fixed': '#acedff', 'tertiary-fixed-dim': '#4cd7f6', 'on-primary-container': '#fdfcff', 'surface-container': '#e5eeff', 'surface-container-high': '#dce9ff', 'surface-container-low': '#eff4ff', 'on-primary-fixed-variant': '#004b73', 'on-surface-variant': '#3f4850', 'primary-fixed-dim': '#93ccff', 'tertiary-container': '#008096', 'surface-container-highest': '#d3e4fe', 'on-tertiary-container': '#f9fdff', 'primary-container': '#007bb9', 'on-tertiary-fixed-variant': '#004e5c', 'secondary-fixed': '#e2dfff', 'on-background': '#0b1c30', 'on-primary': '#ffffff', 'inverse-primary': '#93ccff', 'secondary-container': '#645efb', 'inverse-on-surface': '#eaf1ff', 'on-error': '#ffffff', 'on-tertiary': '#ffffff', 'inverse-surface': '#213145', 'outline': '#707881', 'on-primary-fixed': '#001d31', 'surface-variant': '#d3e4fe', 'secondary-fixed-dim': '#c3c0ff', 'on-error-container': '#93000a', 'background': '#f8f9ff', 'on-secondary-fixed': '#0f0069', 'on-surface': '#0b1c30', 'surface': '#f8f9ff' }, borderRadius: { 'DEFAULT': '0.125rem', 'lg': '0.25rem', 'xl': '0.5rem', 'full': '0.75rem' }, spacing: { 'space-sm': '0.5rem', 'gutter-desktop': '1.5rem', 'margin-desktop': '2rem', 'space-md': '0.75rem', 'margin-tablet': '1.5rem', 'gutter': '1rem', 'space-lg': '1.25rem', 'margin': '1rem', 'space-xs': '0.25rem', 'space-xl': '2rem' }, fontFamily: { 'badge': ['Inter'], 'headline-lg': ['Inter'], 'body-lg': ['Inter'], 'body-md': ['Inter'], 'display-metric': ['JetBrains Mono'], 'headline-md': ['Inter'], 'label-md': ['Inter'], 'headline-lg-mobile': ['Inter'], 'label-mono': ['JetBrains Mono'], 'body-sm': ['Inter'], 'headline-sm': ['Inter'] }, fontSize: { 'badge': ['11px', { lineHeight: '14px', letterSpacing: '0.03em', fontWeight: '700' }], 'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.015em', fontWeight: '600' }], 'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }], 'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }], 'display-metric': ['36px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '600' }], 'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'headline-lg-mobile': ['22px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }], 'label-mono': ['11px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '500' }], 'body-sm': ['13px', { lineHeight: '18px', fontWeight: '400' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Kinetic Clinical Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U8_Q9Qe5gSNhtY3wpQH-iMSIeyGsua4ugsRbOFL_cu7wQiTJlykvPkqdAlt4E6kZ-2Ai8uixZiIGmEDq8ELqwInZfpRPyNwe9vz9h8YeacpCJG9rpSBuXDvjKXU8RJA1NU39kamEwbf4zeY3TVi9rLB06m7Zx8U4AJjsYG-aphemlR3dSgNOOGyvv31ZAh8av7KVM1SG3yLQvGbL9my04WvjWLJ81P22bkXw9BoWDuEOiH-EYTg3Z3Zw"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-tight">Kinetic Clinical</span><div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span class="font-label-mono text-label-mono text-tertiary font-semibold uppercase tracking-wider">ML Sync Active</span></div></div></div><div class="flex items-center gap-space-sm"><div class="hidden sm:flex flex-col items-end"><span class="font-headline-sm text-headline-sm text-on-surface">Kinematics</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover min-w-[32px] min-h-[32px]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8XBn1s3V1hnk3tJHIbVI7RPSEnOz9WcMKbbXW2KnAZGa_6TxFwc70rjssH4mdw6ehe8v4m3nuBLzwL9kxn76NDRoJ-2OcaBEDXTy4sVZ9ZPLSQTSch0Ktrxbq2K75TzDv__Q1IGqn_aTaZEJg6DktqUDmChWgMC5-cl0YtMWisaNtPVPY5rElY5SyXdjEoOeF63HqDMVJPPgUx6kxmjY4Q88Gm2f_vPyXKRseux-3V1O7paxGTzu8"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-background"><div class="flex flex-col w-full">
+<!-- Session Quick Meta Header -->
+<section class="px-margin pt-space-md pb-space-sm bg-surface flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-mono text-label-mono text-tertiary uppercase font-semibold">TrueDepth 60fps Tracked</span>
+</div>
+<span class="font-label-mono text-label-mono text-on-surface-variant">Today, 08:42 AM</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="min-w-0">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight truncate">Marcus Chen</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Session #34 • Overhead Shoulder Press (Bilateral)</p>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high text-on-surface px-space-sm py-1 rounded-lg shrink-0">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-badge text-badge">REV-34</span>
+</div>
+</div>
+</section>
+<!-- Kinematic Biomechanical Player Canvas Area -->
+<section class="relative w-full bg-inverse-surface text-inverse-on-surface overflow-hidden shadow-md">
+<!-- Patient Depth-Stream Background + Wireframe Overlay -->
+<div class="relative w-full h-80 bg-[#071322] flex items-center justify-center overflow-hidden select-none">
+<!-- Simulated Depth Background Gradient -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-black/60 pointer-events-none"></div>
+<!-- Real Patient Frame Background Image Placeholder -->
+<img class="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity" data-alt="Cinematic high contrast low angle view of an athletic male physical therapy patient performing a bilateral overhead shoulder press indoors, modern rehab lab backdrop with soft blue volumetric lighting, volumetric clinical sensor rays, high fidelity medical telemetry photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARz49IigpCiIbhLlhsahf7gr94H5jcuXggqtAaJa956nsqxYShR6GsGEOKkhtHjpJH9vRrU6ZebHB6uzlO6guQf8WVF3hhm6h0MZ35BmQtaGZTYlct7oRsWYQl9B3H2Po5WAiFkQAOUaM-bH1qV8jRfvEawAoccAcPqusEGGGP-EJsZgiYUtjX97SE01Egs2H-ACCf3oOoMKXdhEUMqaJRxcHhzbZyU7TN_x-q17f7WtKejZBSNVV_"/>
+<!-- Real-time SVG Skeletal & Kinematic Angle Vector Overlay -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" fill="none" viewbox="0 0 390 320" xmlns="http://www.w3.org/2000/svg">
+<!-- Depth Grid Lines -->
+<line stroke="#93ccff" stroke-dasharray="3 3" stroke-opacity="0.08" x1="20" x2="370" y1="160" y2="160"></line>
+<line stroke="#93ccff" stroke-dasharray="3 3" stroke-opacity="0.08" x1="195" x2="195" y1="30" y2="290"></line>
+<!-- Lumbar Base & Spine -->
+<circle cx="195" cy="245" fill="#4cd7f6" r="4.5"></circle>
+<line stroke="#4cd7f6" stroke-linecap="round" stroke-width="2.5" x1="195" x2="195" y1="245" y2="155"></line>
+<circle cx="195" cy="155" fill="#4cd7f6" r="4"></circle>
+<!-- Neck to Head -->
+<line stroke="#4cd7f6" stroke-width="2" x1="195" x2="195" y1="155" y2="115"></line>
+<circle cx="195" cy="100" fill="none" r="10" stroke="#4cd7f6" stroke-width="2"></circle>
+<!-- Shoulder Girdle Clavicle Bar -->
+<line stroke="#4cd7f6" stroke-linecap="round" stroke-width="2.5" x1="135" x2="255" y1="158" y2="158"></line>
+<!-- Right Arm Chain (Patient Right / Screen Left) -->
+<line stroke="#4cd7f6" stroke-linecap="round" stroke-width="3" x1="135" x2="90" y1="158" y2="110"></line>
+<line stroke="#acedff" stroke-linecap="round" stroke-width="2.5" x1="90" x2="98" y1="110" y2="48"></line>
+<circle cx="135" cy="158" fill="#acedff" r="5" stroke="#006194" stroke-width="1.5"></circle>
+<circle cx="90" cy="110" fill="#ffffff" r="5.5" stroke="#4cd7f6" stroke-width="2"></circle>
+<circle cx="98" cy="48" fill="#acedff" r="4"></circle>
+<!-- Left Arm Chain (Patient Left / Screen Right - Flagged Compensation Angle) -->
+<line stroke="#ffdad6" stroke-linecap="round" stroke-width="3" x1="255" x2="296" y1="158" y2="124"></line>
+<line stroke="#ffdad6" stroke-dasharray="2 2" stroke-linecap="round" stroke-width="2.5" x1="296" x2="282" y1="124" y2="62"></line>
+<circle cx="255" cy="158" fill="#ba1a1a" r="5" stroke="#ffffff" stroke-width="1.5"></circle>
+<circle cx="296" cy="124" fill="#ffffff" r="5.5" stroke="#ba1a1a" stroke-width="2"></circle>
+<circle cx="282" cy="62" fill="#ffdad6" r="4"></circle>
+<!-- Arc Angle Overlay on Right Shoulder -->
+<path d="M 135 138 A 20 20 0 0 1 120 152" fill="none" stroke="#4cd7f6" stroke-width="2"></path>
+<text fill="#4cd7f6" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="76" y="145">164°</text>
+<!-- Arc Angle Overlay on Left Shoulder (Flagged Asymmetry) -->
+<path d="M 255 138 A 20 20 0 0 0 273 150" fill="none" stroke="#ffdad6" stroke-width="2"></path>
+<text fill="#ffdad6" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" x="270" y="142">151°</text>
+<!-- Pelvic Tilt Compensation Indicator -->
+<path d="M 180 248 Q 195 240 210 248" fill="none" stroke="#ffdad6" stroke-dasharray="2 2" stroke-width="2"></path>
+<text fill="#ffdad6" font-family="'Inter', sans-serif" font-size="9" x="216" y="252">Lordosis +4°</text>
+</svg>
+<!-- Live Floating HUD Top Bar -->
+<div class="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+<div class="bg-inverse-surface/85 backdrop-blur-md px-space-sm py-1 rounded-lg flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+<span class="font-label-mono text-label-mono text-inverse-on-surface">Rep 4/10</span>
+<span class="font-label-mono text-label-mono text-outline-variant">•</span>
+<span class="font-label-mono text-label-mono text-tertiary-fixed font-semibold">Peak Concentric</span>
+</div>
+<div class="bg-inverse-surface/85 backdrop-blur-md px-space-sm py-1 rounded-lg flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary-fixed-dim">verified</span>
+<span class="font-label-mono text-label-mono text-inverse-on-surface">98.4% Conf</span>
+</div>
+</div>
+<!-- Live Biomechanical Angle Banner Floating on Player -->
+<div class="absolute bottom-2 left-2 right-2 bg-inverse-surface/90 backdrop-blur-md rounded-lg p-space-xs flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-2">
+<div class="flex flex-col">
+<span class="font-label-mono text-[10px] text-outline-variant leading-none">R-SHOULDER</span>
+<span class="font-display-metric text-[16px] text-tertiary-fixed font-bold leading-tight">164°</span>
+</div>
+<div class="h-5 w-[1px] bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="font-label-mono text-[10px] text-outline-variant leading-none">L-SHOULDER</span>
+<span class="font-display-metric text-[16px] text-error-container font-bold leading-tight">151°</span>
+</div>
+</div>
+<div class="bg-error-container text-on-error-container px-2 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span class="font-label-mono text-[10px] font-bold">ASYM: 7.9%</span>
+</div>
+</div>
+</div>
+<!-- Timeline & Playback Scrub Chrome -->
+<div class="bg-[#0b1c30] px-margin py-space-sm flex flex-col gap-space-xs select-none">
+<!-- Scrub Bar with Color-Coded Kinematic Phases -->
+<div class="flex flex-col gap-1 w-full">
+<div class="relative w-full h-3 bg-surface-variant/20 rounded-full overflow-hidden flex cursor-pointer">
+<!-- Phase 1: Setup / Isometric (Blue) -->
+<div class="h-full bg-primary" style="width: 18%;" title="Phase 1: Setup"></div>
+<!-- Phase 2: Concentric Lift (Green/Tertiary) -->
+<div class="h-full bg-tertiary-container" style="width: 34%;" title="Phase 2: Concentric"></div>
+<!-- Phase 3: Peak Hold (Cyan) -->
+<div class="h-full bg-tertiary-fixed-dim" style="width: 18%;" title="Phase 3: Peak Hold"></div>
+<!-- Phase 4: Eccentric Lowering (Amber/Secondary-Fixed) -->
+<div class="h-full bg-[#f59e0b]" style="width: 30%;" title="Phase 4: Eccentric Lowering"></div>
+<!-- Playhead Needle Positioned at 52% (Peak) -->
+<div class="absolute top-0 bottom-0 left-[52%] w-1 bg-surface rounded-full shadow-[0_0_8px_#ffffff]"></div>
+</div>
+<!-- Micro Phase Labels -->
+<div class="flex justify-between font-label-mono text-[9px] text-outline-variant">
+<span class="text-primary-fixed">ISO (0.0-0.4s)</span>
+<span class="text-tertiary-fixed">CONC (0.4-1.2s)</span>
+<span class="text-tertiary-fixed-dim font-bold">PEAK (1.2-1.6s)</span>
+<span class="text-[#fcd34d]">ECCN (1.6-2.4s)</span>
+</div>
+</div>
+<!-- Player Controls -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-space-xs">
+<!-- Step Back Button -->
+<button class="w-8 h-8 rounded-lg bg-surface-variant/20 hover:bg-surface-variant/40 flex items-center justify-center text-inverse-on-surface transition-colors" title="Previous Frame" type="button">
+<span class="material-symbols-outlined text-[18px]">skip_previous</span>
+</button>
+<!-- Play / Pause Toggle -->
+<button class="w-9 h-9 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center shadow-md active:scale-95 transition-transform" title="Play/Pause" type="button">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">pause</span>
+</button>
+<!-- Step Forward Button -->
+<button class="w-8 h-8 rounded-lg bg-surface-variant/20 hover:bg-surface-variant/40 flex items-center justify-center text-inverse-on-surface transition-colors" title="Next Frame" type="button">
+<span class="material-symbols-outlined text-[18px]">skip_next</span>
+</button>
+</div>
+<div class="flex items-center gap-space-sm">
+<!-- Slow-Mo Toggle -->
+<button class="px-2 py-1 rounded bg-secondary/30 text-secondary-fixed font-label-mono text-[11px] font-bold" type="button">
+            0.5x SLOW
+          </button>
+<!-- Timestamp -->
+<span class="font-label-mono text-label-mono text-inverse-on-surface">
+<span class="text-tertiary-fixed">01:24</span> / 02:40
+          </span>
+</div>
+</div>
+</div>
+</section>
+<!-- Repetition Metrics Breakdown Section -->
+<section class="px-margin py-space-md flex flex-col gap-space-md">
+<!-- Horizontal Repetition Selector Well -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Repetition Log</h2>
+<span class="font-label-mono text-label-mono text-error font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> 1 Flagged Compensatory
+        </span>
+</div>
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1.5 select-none -mx-margin px-margin">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 1</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 2</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 3</button>
+<!-- Rep 4 Selected & Flagged -->
+<button class="px-3 py-1.5 rounded-lg bg-error-container text-on-error-container font-label-mono text-[12px] font-bold shrink-0 shadow-sm flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[14px]">flag</span> Rep 4
+        </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 5</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 6</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 7</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-mono text-[12px] shrink-0 hover:bg-surface-container transition-colors" type="button">Rep 8</button>
+</div>
+</div>
+<!-- Diagnostic Cards Grid for Rep 4 -->
+<div class="grid grid-cols-1 gap-space-sm">
+<!-- Card 1: ROM Target vs Actual Deficit -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">straighten</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">End-Range ROM</span>
+</div>
+<span class="bg-error-container text-on-error-container font-badge text-badge px-2 py-0.5 rounded-full">-17° Deficit</span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">Left Arm Peak</span>
+<div class="font-display-metric text-display-metric text-error font-semibold">148°</div>
+</div>
+<div class="text-right">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">Target Protocol</span>
+<div class="font-display-metric text-[22px] text-on-surface font-semibold">165°</div>
+</div>
+</div>
+<!-- Custom Track Indicator -->
+<div class="relative w-full h-3 bg-surface-container-high rounded-full overflow-hidden mt-1">
+<div class="h-full bg-error rounded-full" style="width: 78%;"></div>
+<!-- Target Tick Marker -->
+<div class="absolute top-0 bottom-0 left-[88%] w-1 bg-secondary rounded-full" title="Target: 165°"></div>
+</div>
+<div class="flex items-center justify-between font-label-mono text-[11px] text-on-surface-variant">
+<span>Current: 148° (Sub-target end-range)</span>
+<span class="text-secondary font-semibold">Baseline: 165°</span>
+</div>
+</div>
+<!-- Card 2 & 3: Tempo Cadence & Symmetry Index in 2-Column Subgrid -->
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Tempo Cadence Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Tempo Cadence</span>
+<span class="material-symbols-outlined text-[16px] text-error">speed</span>
+</div>
+<div class="my-2">
+<div class="font-display-metric text-[20px] text-error font-semibold tracking-tight">1.4 · 0.5 · 1.1s</div>
+<p class="font-label-mono text-[10px] text-on-surface-variant">Target: 3.0 · 1.0 · 2.0s</p>
+</div>
+<span class="bg-error-container text-on-error-container font-label-mono text-[10px] px-1.5 py-0.5 rounded font-semibold truncate">Rush in Eccentric</span>
+</div>
+<!-- Symmetry Index Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Symmetry Index</span>
+<span class="material-symbols-outlined text-[16px] text-primary">balance</span>
+</div>
+<div class="my-2">
+<div class="font-display-metric text-[22px] text-primary font-semibold">86%</div>
+<!-- Arm Balance Indicator -->
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden flex mt-1">
+<div class="h-full bg-primary" style="width: 58%;" title="Right Arm Dominant"></div>
+<div class="h-full bg-surface-variant" style="width: 42%;" title="Left Arm Deficit"></div>
+</div>
+</div>
+<span class="font-label-mono text-[10px] text-on-surface-variant truncate">Right arm dominant</span>
+</div>
+</div>
+<!-- Card 4: Motor Control Score with Compensation Flag -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<!-- Circular Score Micro SVG -->
+<div class="relative w-12 h-12 shrink-0 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-tertiary-container" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="78, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute font-display-metric text-[12px] text-on-surface font-bold">78%</span>
+</div>
+<div class="min-w-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate">Control Score</h3>
+<p class="font-body-sm text-body-sm text-error truncate flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">report_problem</span>
+              Pelvic Lordosis compensation
+            </p>
+</div>
+</div>
+<button class="px-2.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container text-on-surface font-label-md text-label-md shrink-0 flex items-center gap-1 transition-colors" type="button">
+<span>Details</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Clinician Sticky Review Action Tray -->
+<section class="mt-auto sticky bottom-0 z-40 bg-surface-bright/95 backdrop-blur-md px-margin py-space-sm flex flex-col gap-space-xs shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+<!-- Quick Add Annotation Button -->
+<button class="w-full flex items-center justify-center gap-1.5 py-1.5 text-primary hover:text-primary-container font-label-md text-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+<span>Add Audio/Text Correction Note to Rep 4</span>
+</button>
+<!-- Primary Action Split Buttons -->
+<div class="grid grid-cols-2 gap-space-xs">
+<button class="w-full h-11 bg-surface-container-high hover:bg-surface-container text-primary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center gap-1 transition-colors active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+<span>Override</span>
+</button>
+<button class="w-full h-11 bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Accept (81/100)</span>
+</button>
+</div>
+</section>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="overview" href="#"><span class="material-symbols-outlined text-[24px]">dashboard</span><span class="font-label-md text-label-md mt-0.5">Overview</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="patients" href="#"><span class="material-symbols-outlined text-[24px]">vital_signs</span><span class="font-label-md text-label-md mt-0.5">Patients</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 transition-colors text-primary font-semibold" data-path="kinematics" href="#"><span class="material-symbols-outlined text-[24px]">motion_photos_on</span><span class="font-label-md text-label-md mt-0.5">Kinematics</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="protocol" href="#"><span class="material-symbols-outlined text-[24px]">tune</span><span class="font-label-md text-label-md mt-0.5">Protocol</span></a></div></nav></body></html>

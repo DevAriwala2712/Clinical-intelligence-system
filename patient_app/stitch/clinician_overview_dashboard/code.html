@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-secondary': '#ffffff', 'primary-fixed': '#cce5ff', 'error': '#ba1a1a', 'on-tertiary-fixed': '#001f26', 'surface-bright': '#f8f9ff', 'surface-dim': '#cbdbf5', 'on-secondary-fixed-variant': '#3323cc', 'error-container': '#ffdad6', 'tertiary': '#006577', 'outline-variant': '#bfc7d2', 'primary': '#006194', 'surface-container-lowest': '#ffffff', 'surface-tint': '#006398', 'on-secondary-container': '#fffbff', 'secondary': '#4b41e1', 'tertiary-fixed': '#acedff', 'tertiary-fixed-dim': '#4cd7f6', 'on-primary-container': '#fdfcff', 'surface-container': '#e5eeff', 'surface-container-high': '#dce9ff', 'surface-container-low': '#eff4ff', 'on-primary-fixed-variant': '#004b73', 'on-surface-variant': '#3f4850', 'primary-fixed-dim': '#93ccff', 'tertiary-container': '#008096', 'surface-container-highest': '#d3e4fe', 'on-tertiary-container': '#f9fdff', 'primary-container': '#007bb9', 'on-tertiary-fixed-variant': '#004e5c', 'secondary-fixed': '#e2dfff', 'on-background': '#0b1c30', 'on-primary': '#ffffff', 'inverse-primary': '#93ccff', 'secondary-container': '#645efb', 'inverse-on-surface': '#eaf1ff', 'on-error': '#ffffff', 'on-tertiary': '#ffffff', 'inverse-surface': '#213145', 'outline': '#707881', 'on-primary-fixed': '#001d31', 'surface-variant': '#d3e4fe', 'secondary-fixed-dim': '#c3c0ff', 'on-error-container': '#93000a', 'background': '#f8f9ff', 'on-secondary-fixed': '#0f0069', 'on-surface': '#0b1c30', 'surface': '#f8f9ff' }, borderRadius: { 'DEFAULT': '0.125rem', 'lg': '0.25rem', 'xl': '0.5rem', 'full': '0.75rem' }, spacing: { 'space-sm': '0.5rem', 'gutter-desktop': '1.5rem', 'margin-desktop': '2rem', 'space-md': '0.75rem', 'margin-tablet': '1.5rem', 'gutter': '1rem', 'space-lg': '1.25rem', 'margin': '1rem', 'space-xs': '0.25rem', 'space-xl': '2rem' }, fontFamily: { 'badge': ['Inter'], 'headline-lg': ['Inter'], 'body-lg': ['Inter'], 'body-md': ['Inter'], 'display-metric': ['JetBrains Mono'], 'headline-md': ['Inter'], 'label-md': ['Inter'], 'headline-lg-mobile': ['Inter'], 'label-mono': ['JetBrains Mono'], 'body-sm': ['Inter'], 'headline-sm': ['Inter'] }, fontSize: { 'badge': ['11px', { lineHeight: '14px', letterSpacing: '0.03em', fontWeight: '700' }], 'headline-lg': ['28px', { lineHeight: '36px', letterSpacing: '-0.015em', fontWeight: '600' }], 'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }], 'body-md': ['14px', { lineHeight: '20px', fontWeight: '400' }], 'display-metric': ['36px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '600' }], 'headline-md': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '600' }], 'headline-lg-mobile': ['22px', { lineHeight: '28px', letterSpacing: '-0.01em', fontWeight: '600' }], 'label-mono': ['11px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '500' }], 'body-sm': ['13px', { lineHeight: '18px', fontWeight: '400' }], 'headline-sm': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '600' }] } } } };</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Kinetic Clinical Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U8_Q9Qe5gSNhtY3wpQH-iMSIeyGsua4ugsRbOFL_cu7wQiTJlykvPkqdAlt4E6kZ-2Ai8uixZiIGmEDq8ELqwInZfpRPyNwe9vz9h8YeacpCJG9rpSBuXDvjKXU8RJA1NU39kamEwbf4zeY3TVi9rLB06m7Zx8U4AJjsYG-aphemlR3dSgNOOGyvv31ZAh8av7KVM1SG3yLQvGbL9my04WvjWLJ81P22bkXw9BoWDuEOiH-EYTg3Z3Zw"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-tight">Kinetic Clinical</span><div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span class="font-label-mono text-label-mono text-tertiary font-semibold uppercase tracking-wider">ML Sync Active</span></div></div></div><div class="flex items-center gap-space-sm"><div class="hidden sm:flex flex-col items-end"><span class="font-headline-sm text-headline-sm text-on-surface">Overview</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover min-w-[32px] min-h-[32px]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8XBn1s3V1hnk3tJHIbVI7RPSEnOz9WcMKbbXW2KnAZGa_6TxFwc70rjssH4mdw6ehe8v4m3nuBLzwL9kxn76NDRoJ-2OcaBEDXTy4sVZ9ZPLSQTSch0Ktrxbq2K75TzDv__Q1IGqn_aTaZEJg6DktqUDmChWgMC5-cl0YtMWisaNtPVPY5rElY5SyXdjEoOeF63HqDMVJPPgUx6kxmjY4Q88Gm2f_vPyXKRseux-3V1O7paxGTzu8"/></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-background"><div class="flex flex-col w-full">
+<!-- Top Clinician Greeting & Pulse Banner -->
+<section class="px-margin pt-space-md pb-space-sm">
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-tertiary uppercase tracking-wider font-semibold">Clinic Station • Ortho PT</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-0.5">Good morning, Dr. Vance</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">DPT, OCS • Wednesday, Oct 23</p>
+</div>
+<div class="flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed px-space-sm py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-mono text-label-mono font-semibold">14 Active Live</span>
+</div>
+</div>
+<!-- Quick Context Stat bar -->
+<div class="grid grid-cols-2 gap-space-xs mt-space-md pt-space-xs bg-surface-container-lowest rounded-lg p-space-xs">
+<div class="flex items-center gap-2 p-1.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">neurology</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Edge Engine</span>
+<span class="font-label-md text-label-md text-on-surface">Kinetic ML v4.2</span>
+</div>
+</div>
+<div class="flex items-center gap-2 p-1.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Sync Accuracy</span>
+<span class="font-label-md text-label-md text-on-surface">99.1% Confidence</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- KPI Metric Grid (2x2) -->
+<section class="px-margin py-space-xs">
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Patients Active</span>
+<span class="material-symbols-outlined text-primary text-[20px]">groups</span>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-metric text-display-metric text-on-surface">42</span>
+<span class="font-label-mono text-label-mono text-tertiary flex items-center font-bold">↑3/wk</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">36 On-Track</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Pending Review</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">pending_actions</span>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-metric text-display-metric text-on-surface">9</span>
+<span class="font-label-mono text-label-mono text-secondary flex items-center font-bold">Rehab Q</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Requires triage</span>
+</div>
+</div>
+<!-- KPI 3: Alert -->
+<div class="bg-error-container rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-error-container font-semibold">High Pain Alerts</span>
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-metric text-display-metric text-on-error-container">4</span>
+<span class="font-label-mono text-label-mono text-error font-bold">3 Flagged</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-error-container/80 line-clamp-1">1 Abstained session</span>
+</div>
+</div>
+<!-- KPI 4: Compliance -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">ROM Compliance</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]">task_alt</span>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-metric text-display-metric text-on-surface">88.4%</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-mono text-label-mono text-tertiary font-medium">On-Device Verified</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Quick Filter / Segment Bar -->
+<section class="px-margin pt-space-md pb-space-xs">
+<div class="bg-surface-container rounded-xl p-1 flex items-center gap-1 overflow-x-auto" id="filter-tab-bar">
+<button class="flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all bg-surface-container-lowest text-on-surface font-semibold shadow-sm whitespace-nowrap" id="tab-btn-all" onclick="switchTab('all')">
+        All Items (6)
+      </button>
+<button class="flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface whitespace-nowrap flex items-center justify-center gap-1" id="tab-btn-critical" onclick="switchTab('critical')">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+        Critical Alerts (2)
+      </button>
+<button class="flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface whitespace-nowrap flex items-center justify-center gap-1" id="tab-btn-progressions" onclick="switchTab('progressions')">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+        Progression (2)
+      </button>
+</div>
+</section>
+<!-- Critical Alerts Section -->
+<section class="px-margin pt-space-sm filter-group-critical" id="section-critical">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-error text-[18px]">crisis_alert</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">High Priority Triage</span>
+</div>
+<span class="font-badge text-badge px-2 py-0.5 rounded-full bg-error-container text-on-error-container">2 Action Required</span>
+</div>
+<!-- Alert Card 1: High Pain -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-sm transition-all" id="alert-card-1">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Close up clinical portrait of a male patient David Miller in his late 50s with grey hair wearing a clean navy athletic shirt, neutral clinical lighting, high fidelity medical record photograph." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYcdzKLkkr3cgZBe7P_8nfmrFewWRbrx2V4tpDWSsAscnMGS_pPDEa7JvzB13wznajaQQVVvg_MpniEU0qzYmJ0TAjmFQf3Pe-9RpWk0MbP5jo2R0iZuFjXim3Xi6SbAepYU4YGcCS5mwr-0GBaRK0ZASQi5nTyX9NJ8H8hX7ZZo6QQ6wbQPsxwOINu3HwuXKHYNrz-SIXQDL1CWbi56oYhm8UQbaPaKg8G_IXAkGIvj24Oxl_O3UC"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">David Miller</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">#PT-4091</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Total Hip Arthroplasty (THA) • Post-op Wk 4</span>
+</div>
+</div>
+<span class="font-badge text-badge px-2 py-1 rounded bg-error-container text-on-error-container font-bold whitespace-nowrap">
+          PAIN VAS 8/10
+        </span>
+</div>
+<!-- Kinematic Flag Details -->
+<div class="mt-space-sm bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono text-label-mono mb-1">
+<span class="flex items-center gap-1 text-error font-semibold">
+<span class="material-symbols-outlined text-[14px]">cancel</span>
+            Aborted at Rep 4 • Bulgarian Split Squat
+          </span>
+<span>14m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+          Pelvic drop compensation reached <strong class="text-error font-semibold">+14.2°</strong> exceeding baseline tolerance (+4.0°). Patient triggered tactile pain override.
+        </p>
+<!-- Mini Telemetry Sparkline & Joint Angle Visual -->
+<div class="mt-space-xs pt-space-xs flex items-center justify-between bg-surface-container-lowest rounded p-2">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Hip Flexion Peak</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-display-metric">68° <span class="text-label-mono text-error font-normal">(-22° Target)</span></span>
+</div>
+<svg class="w-28 h-8 text-error" fill="none" viewbox="0 0 100 24">
+<path d="M0 16 L20 15 L40 17 L60 8 L80 23 L100 22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<circle cx="80" cy="23" fill="#ba1a1a" r="3"></circle>
+</svg>
+</div>
+</div>
+<!-- Quick Triage Actions -->
+<div class="mt-space-sm grid grid-cols-2 gap-space-xs">
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md active:opacity-90" onclick="handleAction(this, 'Opened Kinematics Player for David Miller')">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span>Review Kinematics</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-container-highest" onclick="handleAction(this, 'Contact channel initiated for David Miller')">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Message Patient</span>
+</button>
+</div>
+</div>
+<!-- Alert Card 2: Abstained Session -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-sm transition-all" id="alert-card-2">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Portrait photo of Sofia Alvarez, female patient in her late 30s with dark hair tied back in a sleek ponytail, soft natural daylight, wearing a clinical sports top, high definition rehabilitation record." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUnMrsku6ZLnUIKyEeB0eZ_-u33bn6oSjDs1BjiD_YWn18moIg98BnqcReDBYd343A1Q_y7XZ25m2wovugLoUyCXkUn_FQwTed1qFSo1Mgpaj9G9oHwfEdCIFSEQrtk2PmjLPqJg60C6c8aOtxAaTy1-OYNmf0PbSjDjCfuNoAt-TBG1QXIkGwHJXz2wVxuAIqacdK5FbGnG4T-asWmqCkAqmzjvYaTlqegc08FSmQT610YYobA5cn"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Sofia Alvarez</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">#PT-2283</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">L4-L5 Lumbar Radiculopathy • Conservative</span>
+</div>
+</div>
+<span class="font-badge text-badge px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-bold whitespace-nowrap">
+          SESSION ABSTAINED
+        </span>
+</div>
+<div class="mt-space-sm bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex items-center justify-between text-on-surface-variant font-label-mono text-label-mono mb-1">
+<span class="flex items-center gap-1 text-secondary font-semibold">
+<span class="material-symbols-outlined text-[14px]">motion_blur</span>
+            Sensor Disconnect &amp; Spasm Flag
+          </span>
+<span>42m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+          Aborted during <em>Quadruped Bird-Dog (Set 1)</em>. Patient reported "Acute sharp electric spasm in left gluteal region". Optical tracking dropped confidence to 62%.
+        </p>
+<div class="mt-space-xs pt-space-xs flex items-center justify-between bg-surface-container-lowest rounded p-2">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Sensor Confidence</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-display-metric">62% <span class="text-label-mono text-secondary font-normal">(Degraded)</span></span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[16px] text-tertiary">history_toggle_off</span>
+<span class="font-label-mono text-label-mono text-on-surface">02:14 Elapsed</span>
+</div>
+</div>
+</div>
+<div class="mt-space-sm grid grid-cols-2 gap-space-xs">
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-container-highest" onclick="handleAction(this, 'Inspecting sensor log...')">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+<span>Inspect Log</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md" onclick="handleAction(this, 'Connecting clinical audio dialer...')">
+<span class="material-symbols-outlined text-[18px]">call</span>
+<span>Call Patient</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ML Progression Recommendations Section -->
+<section class="px-margin pt-space-sm pb-space-lg filter-group-progressions" id="section-progressions">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">auto_graph</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Algorithmic Progressions</span>
+</div>
+<span class="font-badge text-badge px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold">2 Ready to Advance</span>
+</div>
+<!-- Progression Card 1: Elena Rostova -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-sm transition-all" id="prog-card-elena">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Portrait of young female athletic patient Elena Rostova with brown hair pulled into a high bun, bright clean clinical environment, sharp facial detail, medical EHR avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPxxNtacKXd0Anhufed1IAhbmFW6eph381m-vnLAnAOOAVws5Hv8o2D7vLCEzW0G-gNPKgktHMPPw14mdBe66oD23M2dh0MKDNfdrSdZmzt1LBHN5mJwewACa1d5oItC3mQH0uSK0bdm7wK8DOR9FDY_NnwzBXqCC-GLF-58JnFqfKygzGChM14EQHs1SR7u_7lN0jU2v6VoQCM3gEHFcvElFXHBgATL2gzjR5QXSgSazNp90O_xaf"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Elena Rostova</span>
+<span class="font-label-mono text-label-mono text-tertiary font-bold">96% Compliant</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Post-Op ACL Reconstruction • Day 42</span>
+</div>
+</div>
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</div>
+</div>
+<!-- Recommendation Spec Box -->
+<div class="mt-space-sm bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex items-center gap-1 text-primary font-label-md text-label-md mb-1">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Prescription Shift: Terminal Knee Ext &amp; Wall Sits</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+          Increase resistance from <strong class="text-on-surface font-semibold">Light Band (Yellow)</strong> to <strong class="text-primary font-semibold">Medium Band (Red)</strong> + add 2 reps (3x12).
+        </p>
+<div class="mt-space-xs flex items-center justify-between text-on-surface-variant font-label-mono text-label-mono bg-surface-container-lowest p-2 rounded">
+<span>Zero pain across 5 sessions</span>
+<span class="text-primary font-semibold">ROM 132° Flex / 0° Ext</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="mt-space-sm flex items-center gap-space-xs">
+<button class="flex-1 py-2 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-transform" onclick="approveProgression('prog-card-elena', 'Elena Rostova')">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span>Approve Progression</span>
+</button>
+<button class="py-2 px-3 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-1 hover:bg-surface-container-highest" onclick="handleAction(this, 'Loaded Telemetry stream for Elena Rostova')">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+<span class="hidden xs:inline">Telemetry</span>
+</button>
+</div>
+</div>
+<!-- Progression Card 2: Marcus Chen -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-sm transition-all" id="prog-card-marcus">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Portrait of male Asian patient Marcus Chen, 35 years old, athletic build, short black hair, focused and confident expression, clinical lighting, rehabilitation system user photo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUFnbZqfTLShXjVLg95HZUk7fC-hQYL6UoaKP0wab9NpVCaGsqYRT2AdPLrkGEBjZ9ucU8yq9YrcDMg9_vuOjSVPabYh3QnHykDeS8vzO2Q2Lj5lhyngrlu8uz2B1mOjpUFFFqMlJgFGDKlGh4vbYp4e0KhpscehezcY84HAaxiHRDP8uuZg_F6aCvK02gTpVWhrHV1Jz7gJ5kK7OZGNsDRPQVacJK3O2BCo5nR3qUYxZw7A3NS69u"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Marcus Chen</span>
+<span class="font-label-mono text-label-mono text-tertiary font-bold">94% Compliant</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Rotator Cuff Supraspinatus Repair • Wk 6</span>
+</div>
+</div>
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+</div>
+</div>
+<div class="mt-space-sm bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex items-center gap-1 text-primary font-label-md text-label-md mb-1">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Prescription Shift: Scaption Plane with Dumbbell</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">
+          Progress load <strong class="text-primary font-semibold">+1.0 lb</strong> (from 2.0 lbs to 3.0 lbs). Angular velocity steady at <strong class="font-label-mono">42°/s</strong> with zero scapular hike compensation.
+        </p>
+<div class="mt-space-xs flex items-center justify-between text-on-surface-variant font-label-mono text-label-mono bg-surface-container-lowest p-2 rounded">
+<span>Bilateral Symmetry: 94%</span>
+<span class="text-tertiary font-semibold">Smoothness Index: 0.91</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-center gap-space-xs">
+<button class="flex-1 py-2 px-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-transform" onclick="approveProgression('prog-card-marcus', 'Marcus Chen')">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span>Approve Progression</span>
+</button>
+<button class="py-2 px-3 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-1 hover:bg-surface-container-highest" onclick="handleAction(this, 'Loaded Telemetry stream for Marcus Chen')">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+<span class="hidden xs:inline">Telemetry</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Interactive Clinician Action Toast Notification Container -->
+<div class="fixed bottom-20 left-4 right-4 z-40 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none" id="toast-banner">
+<div class="bg-inverse-surface text-inverse-on-surface px-space-md py-space-sm rounded-lg shadow-xl flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-fixed text-[20px]" id="toast-icon">check_circle</span>
+<span class="font-body-sm text-body-sm font-medium" id="toast-message">Action processed</span>
+</div>
+<span class="font-label-mono text-label-mono text-outline-variant">Auto-Synced</span>
+</div>
+</div>
+</div>
+<script>
+  function switchTab(mode) {
+    const tabs = ['all', 'critical', 'progressions'];
+    tabs.forEach(t => {
+      const btn = document.getElementById('tab-btn-' + t);
+      if (t === mode) {
+        btn.className = "flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all bg-surface-container-lowest text-on-surface font-semibold shadow-sm whitespace-nowrap";
+      } else {
+        btn.className = "flex-1 py-1.5 px-3 rounded-lg text-center font-label-md text-label-md transition-all text-on-surface-variant hover:text-on-surface whitespace-nowrap flex items-center justify-center gap-1";
+      }
+    });
+
+    const critSec = document.getElementById('section-critical');
+    const progSec = document.getElementById('section-progressions');
+
+    if (mode === 'all') {
+      critSec.style.display = 'block';
+      progSec.style.display = 'block';
+    } else if (mode === 'critical') {
+      critSec.style.display = 'block';
+      progSec.style.display = 'none';
+    } else if (mode === 'progressions') {
+      critSec.style.display = 'none';
+      progSec.style.display = 'block';
+    }
+  }
+
+  function approveProgression(cardId, patientName) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    
+    // Create instant delightful affirmation animation
+    card.style.transform = 'scale(0.98)';
+    card.style.opacity = '0.5';
+    
+    setTimeout(() => {
+      card.innerHTML = `
+        <div class="py-space-md px-space-sm text-center flex flex-col items-center justify-center bg-surface-container-high rounded-xl">
+          <div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed mb-1 animate-bounce">
+            <span class="material-symbols-outlined text-[24px]">verified</span>
+          </div>
+          <span class="font-headline-sm text-headline-sm text-on-surface">Progression Approved</span>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Updated prescription synched to ${patientName}'s mobile kinetic sensor.</p>
+        </div>
+      `;
+      card.style.transform = 'scale(1)';
+      card.style.opacity = '1';
+    }, 250);
+
+    showToast(`Approved protocol advancement for ${patientName}`, 'done_all');
+  }
+
+  function handleAction(btn, msg) {
+    showToast(msg, 'info');
+  }
+
+  let toastTimeout;
+  function showToast(text, icon = 'check_circle') {
+    const toast = document.getElementById('toast-banner');
+    const msg = document.getElementById('toast-message');
+    const icn = document.getElementById('toast-icon');
+    
+    if (!toast || !msg) return;
+    
+    msg.textContent = text;
+    icn.textContent = icon;
+    
+    toast.classList.remove('translate-y-24', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-24', 'opacity-0');
+    }, 3200);
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a aria-current="page" class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 transition-colors text-primary font-semibold" data-path="overview" href="#"><span class="material-symbols-outlined text-[24px]">dashboard</span><span class="font-label-md text-label-md mt-0.5">Overview</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="patients" href="#"><span class="material-symbols-outlined text-[24px]">vital_signs</span><span class="font-label-md text-label-md mt-0.5">Patients</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="kinematics" href="#"><span class="material-symbols-outlined text-[24px]">motion_photos_on</span><span class="font-label-md text-label-md mt-0.5">Kinematics</span></a><a class="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] flex-1 text-on-surface-variant hover:text-primary transition-colors" data-path="protocol" href="#"><span class="material-symbols-outlined text-[24px]">tune</span><span class="font-label-md text-label-md mt-0.5">Protocol</span></a></div></nav></body></html>
