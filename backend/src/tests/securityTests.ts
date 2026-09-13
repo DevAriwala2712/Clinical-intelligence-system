@@ -197,6 +197,11 @@ async function runSecurityTests() {
   });
   assertEqual(badScoreResult.status, 400, 'uploadSession rejects an overallScore above 100');
 
+  const nonNumericPainResult = await apiRequest('POST', '/api/sessions', patientToken, {
+    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', pain: 'abc', overallScore: 80,
+  });
+  assertEqual(nonNumericPainResult.status, 400, 'uploadSession rejects a non-numeric pain value');
+
   printSummaryAndExit();
 }
 

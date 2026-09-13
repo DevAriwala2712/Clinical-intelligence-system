@@ -43,14 +43,14 @@ export async function uploadSession(req: AuthedRequest, res: Response) {
   // database (Section 131 - do not accept obviously invalid values). Pain
   // and discomfort are 0-10, difficulty is 1-10, per the local SQLite
   // schema's own documented ranges.
-  if (pain !== undefined && pain !== null && (pain < 0 || pain > 10)) {
-    return res.status(400).json({ error: 'pain must be between 0 and 10' });
+  if (pain !== undefined && pain !== null && (typeof pain !== 'number' || pain < 0 || pain > 10)) {
+    return res.status(400).json({ error: 'pain must be a number between 0 and 10' });
   }
-  if (discomfort !== undefined && discomfort !== null && (discomfort < 0 || discomfort > 10)) {
-    return res.status(400).json({ error: 'discomfort must be between 0 and 10' });
+  if (discomfort !== undefined && discomfort !== null && (typeof discomfort !== 'number' || discomfort < 0 || discomfort > 10)) {
+    return res.status(400).json({ error: 'discomfort must be a number between 0 and 10' });
   }
-  if (difficulty !== undefined && difficulty !== null && (difficulty < 1 || difficulty > 10)) {
-    return res.status(400).json({ error: 'difficulty must be between 1 and 10' });
+  if (difficulty !== undefined && difficulty !== null && (typeof difficulty !== 'number' || difficulty < 1 || difficulty > 10)) {
+    return res.status(400).json({ error: 'difficulty must be a number between 1 and 10' });
   }
   // A VALID session must carry a real, in-range score - a wrong score is
   // worse than no score (Section 143), so we refuse an out-of-range one
