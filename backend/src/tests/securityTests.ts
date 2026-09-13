@@ -59,6 +59,41 @@ async function runSecurityTests() {
   });
   assertEqual(reviewResult.status, 403, 'reviewSession rejects a session the clinician does not own');
 
+  // ---- Task 1 (cross-tenant): reviewSession must reject a session that DOES
+  // exist but belongs to a DIFFERENT clinician's patient. The 999999 case
+  // above only proves rows-affected-by-nonexistent-id is zero, which a
+  // broken "existence only" check would also pass - this proves the
+  // clinician_id filter itself is doing real work.
+  const patientToken = await login('patient@demo.com', 'DemoPass123');
+  const uploadResult = await apiRequest('POST', '/api/sessions', patientToken, {
+    programExerciseId: 1,
+    sessionDate: '2026-01-01',
+    status: 'VALID',
+    overallScore: 80,
+  });
+  const realSessionId = uploadResult.body.sessionId;
+
+  const uniqueEmail = `reviewer-test-${Date.now()}@demo.com`;
+  const registerResult = await apiRequest('POST', '/api/auth/register', '', {
+    name: 'Reviewer Test Clinician',
+    email: uniqueEmail,
+    password: 'DemoPass123',
+    role: 'clinician',
+  });
+  const otherClinicianToken = registerResult.body.token;
+
+  const crossTenantResult = await apiRequest(
+    'PUT',
+    `/api/sessions/${realSessionId}/review`,
+    otherClinicianToken,
+    { decision: 'test', correction: null, notes: 'security test' }
+  );
+  assertEqual(
+    crossTenantResult.status,
+    403,
+    'reviewSession rejects a real session belonging to a different clinician\'s patient'
+  );
+
   printSummaryAndExit();
 }
 
