@@ -90,7 +90,17 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     'SELECT * FROM program_exercises WHERE program_id = ? AND exercise_id = ?',
     [suggestion.program_id, suggestion.exercise_id]
   );
-  const oldValue = JSON.stringify((programExerciseRows as any[])[0]);
+  const oldProgramExercise = (programExerciseRows as any[])[0];
+  const oldValue = JSON.stringify(oldProgramExercise);
+
+  // A clinician "approves" when they accept the currently-assigned numbers
+  // as-is; they "modify" when their approval changes sets/repetitions away
+  // from what's currently assigned. progression_suggestions has no
+  // structured "proposed value" field (suggestion/reason are free text),
+  // so this is the only comparison the code can honestly make.
+  const changedSets = newSets !== undefined && newSets !== oldProgramExercise?.sets;
+  const changedRepetitions = newRepetitions !== undefined && newRepetitions !== oldProgramExercise?.repetitions;
+  const finalStatus = (changedSets || changedRepetitions) ? 'MODIFIED' : 'APPROVED';
 
   if (newSets !== undefined || newRepetitions !== undefined) {
     await pool.query(
@@ -100,7 +110,7 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     );
   }
 
-  await pool.query(`UPDATE progression_suggestions SET status = 'APPROVED' WHERE id = ?`, [suggestionId]);
+  await pool.query('UPDATE progression_suggestions SET status = ? WHERE id = ?', [finalStatus, suggestionId]);
 
   await pool.query(
     `INSERT INTO program_changes (program_id, old_value, new_value, reason, approved_by)
@@ -108,7 +118,7 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     [suggestion.program_id, oldValue, JSON.stringify({ newSets, newRepetitions }), note ?? suggestion.reason, clinicianId]
   );
 
-  res.json({ ok: true });
+  res.json({ ok: true, status: finalStatus });
 }
 
 /** POST /progression-suggestions/:id/reject */

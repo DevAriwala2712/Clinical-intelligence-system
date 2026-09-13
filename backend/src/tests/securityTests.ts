@@ -154,6 +154,37 @@ async function runSecurityTests() {
   });
   assertEqual(legitimateReassignResult.status, 201, 'createProgram allows the same clinician to re-assign a patient they already own');
 
+  // ---- Task 4: approveSuggestion must write MODIFIED when the clinician
+  // changes sets/repetitions away from what's currently assigned, and
+  // APPROVED when they don't. ----
+  const myProgramsResult = await apiRequest('GET', '/api/programs/mine', patientToken);
+  const patientProgramId = myProgramsResult.body[0]?.id;
+  const programExercisesResult = await apiRequest(
+    'GET', `/api/programs/${patientProgramId}/exercises`, patientToken
+  );
+  const firstExercise = programExercisesResult.body[0];
+
+  // 4a. Approve with NO changes -> should stay APPROVED.
+  const suggestion1 = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
+    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    suggestion: 'Keep current sets/reps', reason: 'security test - no change',
+  });
+  const approve1 = await apiRequest(
+    'POST', `/api/progression-suggestions/${suggestion1.body.suggestionId}/approve`, clinicianToken, {}
+  );
+  assertEqual(approve1.body.status, 'APPROVED', 'approving a suggestion with unchanged sets/reps stays APPROVED');
+
+  // 4b. Approve WITH a changed rep count -> should become MODIFIED.
+  const suggestion2 = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
+    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    suggestion: 'Increase repetitions', reason: 'security test - changed value',
+  });
+  const approve2 = await apiRequest(
+    'POST', `/api/progression-suggestions/${suggestion2.body.suggestionId}/approve`, clinicianToken,
+    { newRepetitions: firstExercise.repetitions + 5 }
+  );
+  assertEqual(approve2.body.status, 'MODIFIED', 'approving a suggestion with a changed repetition count becomes MODIFIED');
+
   printSummaryAndExit();
 }
 
