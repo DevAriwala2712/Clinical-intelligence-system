@@ -56,6 +56,18 @@ export async function createProgram(req: AuthedRequest, res: Response) {
     return res.status(404).json({ error: 'Patient not found' });
   }
 
+  // Patient-stealing guard: if this patient is already assigned to a
+  // DIFFERENT clinician, refuse. Only that clinician (or nobody yet) may
+  // assign this patient a program through this endpoint.
+  const [profileRows] = await pool.query(
+    'SELECT clinician_id FROM patient_profiles WHERE user_id = ?',
+    [patientId]
+  );
+  const existingClinicianId = (profileRows as any[])[0]?.clinician_id;
+  if (existingClinicianId != null && existingClinicianId !== clinicianId) {
+    return res.status(409).json({ error: 'This patient is already assigned to a different clinician' });
+  }
+
   const [programResult] = await pool.query(
     `INSERT INTO rehabilitation_programs (patient_id, clinician_id, pathway_id, status, start_date)
      VALUES (?, ?, ?, 'active', CURDATE())`,

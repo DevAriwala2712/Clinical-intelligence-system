@@ -39,6 +39,26 @@ export async function uploadSession(req: AuthedRequest, res: Response) {
     return res.status(400).json({ error: 'programExerciseId, sessionDate, and status are required' });
   }
 
+  // Input validation: reject obviously-invalid values before touching the
+  // database (Section 131 - do not accept obviously invalid values). Pain
+  // and discomfort are 0-10, difficulty is 1-10, per the local SQLite
+  // schema's own documented ranges.
+  if (pain !== undefined && pain !== null && (typeof pain !== 'number' || pain < 0 || pain > 10)) {
+    return res.status(400).json({ error: 'pain must be a number between 0 and 10' });
+  }
+  if (discomfort !== undefined && discomfort !== null && (typeof discomfort !== 'number' || discomfort < 0 || discomfort > 10)) {
+    return res.status(400).json({ error: 'discomfort must be a number between 0 and 10' });
+  }
+  if (difficulty !== undefined && difficulty !== null && (typeof difficulty !== 'number' || difficulty < 1 || difficulty > 10)) {
+    return res.status(400).json({ error: 'difficulty must be a number between 1 and 10' });
+  }
+  // A VALID session must carry a real, in-range score - a wrong score is
+  // worse than no score (Section 143), so we refuse an out-of-range one
+  // rather than storing it.
+  if (status === 'VALID' && (typeof overallScore !== 'number' || overallScore < 0 || overallScore > 100)) {
+    return res.status(400).json({ error: 'overallScore must be a number between 0 and 100 for a VALID session' });
+  }
+
   // Ownership check: the program_exercise being reported on must actually
   // belong to a program that belongs to THIS patient.
   const [ownershipRows] = await pool.query(
@@ -138,6 +158,10 @@ export async function getSessionEvidence(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const sessionId = Number(req.params.id);
 
+  if (!Number.isInteger(sessionId) || sessionId <= 0) {
+    return res.status(400).json({ error: 'session id must be a positive integer' });
+  }
+
   const [ownershipRows] = await pool.query(
     `SELECT rs.id FROM rehab_sessions rs
      JOIN program_exercises pe ON rs.program_exercise_id = pe.id
@@ -184,7 +208,26 @@ export async function getSessionEvidence(req: AuthedRequest, res: Response) {
 export async function reviewSession(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const sessionId = Number(req.params.id);
+
+  if (!Number.isInteger(sessionId) || sessionId <= 0) {
+    return res.status(400).json({ error: 'session id must be a positive integer' });
+  }
+
   const { decision, correction, notes } = req.body;
+
+  // Ownership check: this session must belong to one of THIS clinician's
+  // patients, via rehab_sessions -> program_exercises -> rehabilitation_programs.
+  // Mirrors the same pattern already used in getSessionEvidence above.
+  const [ownershipRows] = await pool.query(
+    `SELECT rs.id FROM rehab_sessions rs
+     JOIN program_exercises pe ON rs.program_exercise_id = pe.id
+     JOIN rehabilitation_programs rp ON pe.program_id = rp.id
+     WHERE rs.id = ? AND rp.clinician_id = ?`,
+    [sessionId, clinicianId]
+  );
+  if ((ownershipRows as any[]).length === 0) {
+    return res.status(403).json({ error: 'Not your session to review' });
+  }
 
   await pool.query(
     `INSERT INTO clinician_reviews (session_id, clinician_id, decision, correction, notes)

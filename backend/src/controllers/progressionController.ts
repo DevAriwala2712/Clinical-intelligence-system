@@ -16,10 +16,22 @@ import { pool } from '../db/pool';
  * records the resulting suggestion for the clinician to see).
  */
 export async function createSuggestion(req: AuthedRequest, res: Response) {
+  const patientId = req.user!.id;
   const { programId, exerciseId, suggestion, reason } = req.body;
 
   if (!programId || !exerciseId || !suggestion || !reason) {
     return res.status(400).json({ error: 'programId, exerciseId, suggestion, and reason are required' });
+  }
+
+  // Ownership check: this program must belong to THIS patient - never trust
+  // a programId supplied by the client without checking who it belongs to
+  // (Section 91/92).
+  const [programRows] = await pool.query(
+    'SELECT id FROM rehabilitation_programs WHERE id = ? AND patient_id = ?',
+    [programId, patientId]
+  );
+  if ((programRows as any[]).length === 0) {
+    return res.status(403).json({ error: 'This program does not belong to you' });
   }
 
   const [result] = await pool.query(
@@ -58,6 +70,11 @@ export async function listPendingSuggestions(req: AuthedRequest, res: Response) 
 export async function approveSuggestion(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const suggestionId = Number(req.params.id);
+
+  if (!Number.isInteger(suggestionId) || suggestionId <= 0) {
+    return res.status(400).json({ error: 'suggestion id must be a positive integer' });
+  }
+
   const { newSets, newRepetitions, note } = req.body;
 
   const [suggestionRows] = await pool.query(
@@ -78,7 +95,17 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     'SELECT * FROM program_exercises WHERE program_id = ? AND exercise_id = ?',
     [suggestion.program_id, suggestion.exercise_id]
   );
-  const oldValue = JSON.stringify((programExerciseRows as any[])[0]);
+  const oldProgramExercise = (programExerciseRows as any[])[0];
+  const oldValue = JSON.stringify(oldProgramExercise);
+
+  // A clinician "approves" when they accept the currently-assigned numbers
+  // as-is; they "modify" when their approval changes sets/repetitions away
+  // from what's currently assigned. progression_suggestions has no
+  // structured "proposed value" field (suggestion/reason are free text),
+  // so this is the only comparison the code can honestly make.
+  const changedSets = newSets !== undefined && newSets !== oldProgramExercise?.sets;
+  const changedRepetitions = newRepetitions !== undefined && newRepetitions !== oldProgramExercise?.repetitions;
+  const finalStatus = (changedSets || changedRepetitions) ? 'MODIFIED' : 'APPROVED';
 
   if (newSets !== undefined || newRepetitions !== undefined) {
     await pool.query(
@@ -88,7 +115,7 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     );
   }
 
-  await pool.query(`UPDATE progression_suggestions SET status = 'APPROVED' WHERE id = ?`, [suggestionId]);
+  await pool.query('UPDATE progression_suggestions SET status = ? WHERE id = ?', [finalStatus, suggestionId]);
 
   await pool.query(
     `INSERT INTO program_changes (program_id, old_value, new_value, reason, approved_by)
@@ -96,13 +123,17 @@ export async function approveSuggestion(req: AuthedRequest, res: Response) {
     [suggestion.program_id, oldValue, JSON.stringify({ newSets, newRepetitions }), note ?? suggestion.reason, clinicianId]
   );
 
-  res.json({ ok: true });
+  res.json({ ok: true, status: finalStatus });
 }
 
 /** POST /progression-suggestions/:id/reject */
 export async function rejectSuggestion(req: AuthedRequest, res: Response) {
   const clinicianId = req.user!.id;
   const suggestionId = Number(req.params.id);
+
+  if (!Number.isInteger(suggestionId) || suggestionId <= 0) {
+    return res.status(400).json({ error: 'suggestion id must be a positive integer' });
+  }
 
   const [rows] = await pool.query(
     `SELECT ps.id FROM progression_suggestions ps
