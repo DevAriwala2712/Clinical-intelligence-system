@@ -1,17 +1,17 @@
 // pool.ts
 //
-// WHAT: creates one shared MySQL "connection pool" when the server starts.
-// WHY: opening a brand-new database connection for every single API request
-//      is slow and can exhaust the database's connection limit. A pool keeps
-//      a small number of connections open and hands them out to whichever
-//      request needs one, then takes them back when the query finishes.
-// HOW IT'S USED: every controller file does `import { pool } from '../db/pool'`
-//      and then `await pool.query(sql, params)`.
+// One shared MySQL connection pool (opening a new connection per request is
+// slow and can exhaust the DB's connection limit).
+//
+// Time handling: every connection is switched to UTC and the driver reads and
+// writes UTC, so a DATETIME stored by one machine is read back as the same
+// instant on another. DATE columns are returned as plain 'YYYY-MM-DD' strings,
+// and DECIMAL columns as JS numbers (not strings).
 
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
-dotenv.config(); // loads variables from the .env file into process.env
+dotenv.config();
 
 export const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -19,6 +19,30 @@ export const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  waitForConnections: true, // if all connections are busy, wait instead of erroring
-  connectionLimit: 10,      // max number of simultaneous connections in the pool
+  waitForConnections: true,
+  connectionLimit: 10,
+  timezone: 'Z',
+  dateStrings: ['DATE'],
+  decimalNumbers: true,
 });
+
+// Make the DB session clock UTC too (CURRENT_TIMESTAMP / NOW() defaults).
+(pool as any).pool.on('connection', (conn: any) => {
+  conn.query("SET time_zone = '+00:00'");
+});
+
+/** Runs `work` inside a transaction; commits on success, rolls back on any error. */
+export async function withTransaction<T>(work: (conn: mysql.PoolConnection) => Promise<T>): Promise<T> {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const result = await work(conn);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}

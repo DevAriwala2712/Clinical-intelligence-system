@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "ts-node src/db/seed.ts",
-    "test": "ts-node src/tests/runAll.ts"
+    "test": "ts-node src/tests/runAll.ts",
+    "eval": "ts-node src/evaluation/runEvaluation.ts"
   },
   "dependencies": {
     "express": "^4.19.2",

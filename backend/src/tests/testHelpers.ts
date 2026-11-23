@@ -1,11 +1,9 @@
 // backend/src/tests/testHelpers.ts
 //
-// WHAT: a tiny hand-rolled test helper - no Jest/Mocha, matching the
-// project's "avoid unnecessary third-party packages" principle (Section 86
-// of mastercontext.md).
-// WHY: we need SOME way to write "expect X, got Y" checks and see a pass/
-// fail summary at the end, without pulling in a whole test framework for a
-// handful of integration tests against our own running server.
+// A tiny hand-rolled test helper - no Jest/Mocha, matching the project's
+// "avoid unnecessary third-party packages" principle.
+// Counts are shared across every test file in one run so `npm test` prints a
+// single summary.
 
 let passCount = 0;
 let failCount = 0;
@@ -25,6 +23,11 @@ export function assertEqual(actual: unknown, expected: unknown, label: string) {
 /** Records a passing check when `condition` is true, a failing one otherwise. */
 export function assertTrue(condition: boolean, label: string) {
   assertEqual(condition, true, label);
+}
+
+/** Groups output under a heading. */
+export function section(title: string) {
+  console.log(`\n${title}`);
 }
 
 /** Prints the final pass/fail totals and exits with a non-zero code on any failure. */

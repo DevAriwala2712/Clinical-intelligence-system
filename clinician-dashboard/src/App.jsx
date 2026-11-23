@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import ToastBanner from './components/ToastBanner';
@@ -6,19 +6,29 @@ import OverviewView from './views/OverviewView';
 import KinematicsPlayerView from './views/KinematicsPlayerView';
 import PatientProfileView from './views/PatientProfileView';
 import ProtocolBuilderView from './views/ProtocolBuilderView';
+import { api } from './api';
 
 function LoginScreen({ onLoggedIn }) {
   const [email, setEmail] = useState('clinician@demo.com');
   const [password, setPassword] = useState('DemoPass123');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      onLoggedIn('demo-token-12345', { name: 'Dr. Vance, DPT, OCS', role: 'clinician', email });
+    setError(null);
+    try {
+      const res = await api.login(email, password);
+      if (res.user?.role !== 'clinician') {
+        throw new Error('This account is registered as a patient. Please sign in with a clinician account.');
+      }
+      onLoggedIn(res.token, res.user);
+    } catch (err) {
+      setError(err.message || 'Login failed. Please verify email and password.');
+    } finally {
       setLoading(false);
-    }, 300);
+    }
   };
 
   return (
@@ -39,16 +49,23 @@ function LoginScreen({ onLoggedIn }) {
           </svg>
         </div>
 
-        <h1 className="font-headline-lg-mobile sm:font-headline-lg font-bold text-on-surface text-center">
+        <h1 className="text-xl sm:text-2xl font-bold text-on-surface text-center">
           Kinetic Clinical
         </h1>
-        <p className="font-body-sm text-xs text-on-surface-variant text-center mt-1 mb-6">
-          Clinician-Calibrated Rehabilitation & Machine Learning Kinematics
+        <p className="text-xs text-on-surface-variant text-center mt-1 mb-6">
+          Clinician-Calibrated Rehabilitation Quality and Progression System
         </p>
+
+        {error && (
+          <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">error</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div>
-            <label className="font-label-md text-xs text-on-surface-variant block mb-1 font-semibold">
+            <label className="text-xs text-on-surface-variant block mb-1 font-semibold">
               Clinician Email
             </label>
             <input
@@ -61,7 +78,7 @@ function LoginScreen({ onLoggedIn }) {
           </div>
 
           <div>
-            <label className="font-label-md text-xs text-on-surface-variant block mb-1 font-semibold">
+            <label className="text-xs text-on-surface-variant block mb-1 font-semibold">
               Password
             </label>
             <input
@@ -76,18 +93,17 @@ function LoginScreen({ onLoggedIn }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-primary text-white font-headline-sm text-sm font-bold shadow-md hover:bg-primary-container active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-xl bg-primary text-white text-sm font-bold shadow-md hover:bg-primary-container active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[20px]">login</span>
-            <span>{loading ? 'Authenticating...' : 'Sign In to Station'}</span>
+            <span>{loading ? 'Authenticating...' : 'Sign In as Clinician'}</span>
           </button>
         </form>
 
         <div className="w-full mt-6 pt-4 border-t border-surface-container text-center">
-          <span className="font-label-mono text-[11px] text-tertiary font-semibold flex items-center justify-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse" />
-            Edge ML Kinematics Engine v4.2 Ready
-          </span>
+          <p className="text-[11px] text-on-surface-variant">
+            Demo Credentials: <span className="font-mono text-primary font-medium">clinician@demo.com</span> / <span className="font-mono text-primary font-medium">DemoPass123</span>
+          </p>
         </div>
       </div>
     </div>
@@ -95,75 +111,129 @@ function LoginScreen({ onLoggedIn }) {
 }
 
 export default function App() {
-  const [token, setToken] = useState('demo-token');
-  const [user, setUser] = useState({ name: 'Dr. Vance, DPT, OCS', role: 'clinician' });
-  const [activeTab, setActiveTab] = useState('overview');
-  const [kinematicsMeta, setKinematicsMeta] = useState({ patientName: 'Marcus Chen', sessionNo: '34' });
-  const [toast, setToast] = useState({ visible: false, message: '', icon: '' });
-
-  const showToast = (message, icon = 'check_circle') => {
-    setToast({ visible: true, message, icon });
-    setTimeout(() => {
-      setToast((prev) => ({ ...prev, visible: false }));
-    }, 3200);
-  };
-
-  const handleNavigate = (tab, meta = null) => {
-    if (meta && tab === 'kinematics') {
-      setKinematicsMeta(meta);
+  const [token, setToken] = useState(() => localStorage.getItem('clinician_token') || '');
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('clinician_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
     }
-    setActiveTab(tab);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+
+  const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ show: true, message, type });
   };
 
-  if (!token) {
-    return <LoginScreen onLoggedIn={(t, u) => { setToken(t); setUser(u); }} />;
+  const handleLoggedIn = (newToken, newUser) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('clinician_token', newToken);
+    localStorage.setItem('clinician_user', JSON.stringify(newUser));
+    showToast(`Welcome back, ${newUser.name}`, 'verified');
+  };
+
+  const handleLogout = () => {
+    setToken('');
+    setUser(null);
+    localStorage.removeItem('clinician_token');
+    localStorage.removeItem('clinician_user');
+    setActiveTab('overview');
+    setSelectedPatientId(null);
+    setSelectedSessionId(null);
+  };
+
+  const handleNavigate = (tab, payload) => {
+    if (tab === 'patient-profile' && payload?.patientId) {
+      setSelectedPatientId(payload.patientId);
+      setActiveTab('patients');
+    } else if (tab === 'kinematics' && payload?.sessionId) {
+      setSelectedSessionId(payload.sessionId);
+      setActiveTab('kinematics');
+    } else if (tab === 'protocol-builder' && payload?.patientId) {
+      setSelectedPatientId(payload.patientId);
+      setActiveTab('protocols');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  if (!token || !user) {
+    return <LoginScreen onLoggedIn={handleLoggedIn} />;
   }
 
   return (
-    <div className="bg-background min-h-screen flex flex-col font-body-md text-on-surface">
-      {/* Top Fixed Header with Logo & Live Pulse */}
+    <div className="min-h-screen bg-surface flex flex-col font-sans text-on-surface">
       <Header
-        activeTab={activeTab}
         user={user}
-        onLogout={() => { setToken(null); setUser(null); }}
+        activeTab={activeTab}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full pt-16">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {activeTab === 'overview' && (
           <OverviewView
+            token={token}
+            user={user}
             onNavigate={handleNavigate}
             showToast={showToast}
           />
         )}
+
         {activeTab === 'patients' && (
           <PatientProfileView
+            token={token}
+            patientId={selectedPatientId}
+            onSelectPatient={setSelectedPatientId}
             onNavigate={handleNavigate}
             showToast={showToast}
           />
         )}
+
         {activeTab === 'kinematics' && (
           <KinematicsPlayerView
-            sessionMeta={kinematicsMeta}
+            token={token}
+            sessionId={selectedSessionId}
+            onNavigate={handleNavigate}
             showToast={showToast}
           />
         )}
-        {activeTab === 'protocol' && (
+
+        {activeTab === 'protocols' && (
           <ProtocolBuilderView
+            token={token}
+            patientId={selectedPatientId}
+            onNavigate={handleNavigate}
             showToast={showToast}
           />
         )}
       </main>
 
-      {/* Bottom Fixed Navigation Bar */}
       <BottomNav
         activeTab={activeTab}
-        onTabChange={(tab) => handleNavigate(tab)}
+        onTabChange={(tab) => {
+          if (tab === 'patients' && !selectedPatientId) {
+            // Default to overview if no patient is selected
+            setActiveTab('patients');
+          } else {
+            setActiveTab(tab);
+          }
+        }}
       />
 
-      {/* Action Toast Notifications */}
-      <ToastBanner toast={toast} />
+      <ToastBanner
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ show: false, message: '', type: 'info' })}
+      />
     </div>
   );
 }

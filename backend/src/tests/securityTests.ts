@@ -67,8 +67,10 @@ async function runSecurityTests() {
   const patientToken = await login('patient@demo.com', 'DemoPass123');
   const uploadResult = await apiRequest('POST', '/api/sessions', patientToken, {
     programExerciseId: 1,
-    sessionDate: '2026-01-01',
+    sessionDate: '2026-01-01T10:00:00Z',
     status: 'VALID',
+    pain: 2,
+    difficulty: 4,
     overallScore: 80,
   });
   assertEqual(uploadResult.status, 201, 'test setup: patient can upload a session to their own program_exercise');
@@ -186,8 +188,9 @@ async function runSecurityTests() {
   const firstExercise = programExercisesResult.body[0];
 
   // 4a. Approve with NO changes -> should stay APPROVED.
+  const exId = firstExercise.exerciseId ?? firstExercise.exercise_id;
   const suggestion1 = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
-    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    programId: patientProgramId, exerciseId: exId,
     suggestion: 'Keep current sets/reps', reason: 'security test - no change',
   });
   const approve1 = await apiRequest(
@@ -197,7 +200,7 @@ async function runSecurityTests() {
 
   // 4b. Approve WITH a changed rep count -> should become MODIFIED.
   const suggestion2 = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
-    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    programId: patientProgramId, exerciseId: exId,
     suggestion: 'Increase repetitions', reason: 'security test - changed value',
   });
   const approve2 = await apiRequest(
@@ -210,7 +213,7 @@ async function runSecurityTests() {
   // path works, so this test doesn't permanently drift the shared seed
   // data's sets/reps on every run.
   const restoreSuggestion = await apiRequest('POST', '/api/progression-suggestions', patientToken, {
-    programId: patientProgramId, exerciseId: firstExercise.exercise_id,
+    programId: patientProgramId, exerciseId: exId,
     suggestion: 'Restore original repetitions', reason: 'security test cleanup',
   });
   await apiRequest(
@@ -221,17 +224,17 @@ async function runSecurityTests() {
   // ---- Task 5: uploadSession must validate pain/discomfort/difficulty
   // ranges and overallScore bounds, before it ever looks at ownership. ----
   const badPainResult = await apiRequest('POST', '/api/sessions', patientToken, {
-    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', pain: 15, overallScore: 80,
+    programExerciseId: 1, sessionDate: '2026-01-01T10:00:00Z', status: 'VALID', pain: 15, difficulty: 4, overallScore: 80,
   });
   assertEqual(badPainResult.status, 400, 'uploadSession rejects a pain rating above 10');
 
   const badScoreResult = await apiRequest('POST', '/api/sessions', patientToken, {
-    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', overallScore: 250,
+    programExerciseId: 1, sessionDate: '2026-01-01T10:00:00Z', status: 'VALID', pain: 2, difficulty: 4, overallScore: 250,
   });
   assertEqual(badScoreResult.status, 400, 'uploadSession rejects an overallScore above 100');
 
   const nonNumericPainResult = await apiRequest('POST', '/api/sessions', patientToken, {
-    programExerciseId: 1, sessionDate: '2026-01-01', status: 'VALID', pain: 'abc', overallScore: 80,
+    programExerciseId: 1, sessionDate: '2026-01-01T10:00:00Z', status: 'VALID', pain: 'abc', difficulty: 4, overallScore: 80,
   });
   assertEqual(nonNumericPainResult.status, 400, 'uploadSession rejects a non-numeric pain value');
 

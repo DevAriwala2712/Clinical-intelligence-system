@@ -4,3 +4,12 @@ node_modules/
 .superpowers/
 .DS_Store
 .claude/
+
+uploads/
+backups/
+*.zip
+dist/
+backend/dist/
+clinician-dashboard/dist/
+build/
+.dart_tool/

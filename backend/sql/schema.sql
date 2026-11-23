@@ -5,11 +5,12 @@
 -- Design principle (matches the SQLite copy on the patient's phone):
 --   users -> patients / clinicians
 --   patients -> rehabilitation_programs -> program_exercises -> rehab_sessions
---   rehab_sessions -> session_repetitions -> repetition_metrics
+--   rehab_sessions -> session_repetitions -> repetition_metrics / repetition_phases / repetition_errors
 --   rehab_sessions -> landmark_points (for the clinician to inspect evidence)
 --   rehabilitation_programs -> progression_suggestions -> clinician_reviews
 --
--- Medications/labs hang off patient_id as secondary clinical context.
+-- Medications/labs hang off patient_id as OPTIONAL clinician-visible context only.
+-- They are never read by the movement-quality or progression logic.
 -- ============================================================================
 
 CREATE DATABASE IF NOT EXISTS rehab_system CHARACTER SET utf8mb4;
@@ -32,6 +33,10 @@ CREATE TABLE patient_profiles (
   sex ENUM('male', 'female', 'other'),
   height_cm DECIMAL(5,1),
   clinician_id INT NULL, -- the assigned treating clinician (nullable until assigned)
+  rehab_goal TEXT NULL,            -- patient's rehabilitation goal, in their own words
+  injury_history TEXT NULL,        -- brief injury / surgery history (free text, clinician-visible)
+  video_upload_consent BOOLEAN NOT NULL DEFAULT FALSE, -- raw video upload is OFF unless the patient opts in
+  video_consent_updated_at DATETIME NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (clinician_id) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -53,6 +58,7 @@ CREATE TABLE rehabilitation_pathways (
 CREATE TABLE exercises (
   id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(150) NOT NULL,
+  engine_key VARCHAR(40) NULL UNIQUE, -- which on-device movement spec analyses this exercise; NULL = not supported by the engine
   description TEXT,
   instructions TEXT,               -- shown to patient before recording
   camera_view VARCHAR(50) NOT NULL, -- e.g. 'side', 'front'
@@ -89,7 +95,8 @@ CREATE TABLE rehabilitation_programs (
   patient_id INT NOT NULL,
   clinician_id INT NOT NULL,
   pathway_id INT NOT NULL,
-  status ENUM('active', 'completed', 'paused') NOT NULL DEFAULT 'active',
+  status ENUM('active', 'completed', 'paused', 'discontinued') NOT NULL DEFAULT 'active',
+  sessions_per_week INT NOT NULL DEFAULT 3, -- prescribed frequency, used for adherence
   start_date DATE NOT NULL,
   end_date DATE NULL,
   FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -106,6 +113,21 @@ CREATE TABLE program_exercises (
   order_number INT NOT NULL DEFAULT 1,
   FOREIGN KEY (program_id) REFERENCES rehabilitation_programs(id) ON DELETE CASCADE,
   FOREIGN KEY (exercise_id) REFERENCES exercises(id)
+);
+
+-- Clinician-approved, patient-specific overrides of the catalog criteria
+-- (personalisation: the same exercise can have a different ROM target for
+-- a patient at week 2 post-op than for one at week 10). A row here replaces
+-- the exercise_criteria row with the same metric_name for this assignment.
+CREATE TABLE program_exercise_criteria (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  program_exercise_id INT NOT NULL,
+  metric_name VARCHAR(60) NOT NULL,
+  target_value DECIMAL(6,2),
+  minimum_value DECIMAL(6,2),
+  maximum_value DECIMAL(6,2),
+  UNIQUE KEY uq_pe_metric (program_exercise_id, metric_name),
+  FOREIGN KEY (program_exercise_id) REFERENCES program_exercises(id) ON DELETE CASCADE
 );
 
 CREATE TABLE patient_baselines (
@@ -129,23 +151,43 @@ CREATE TABLE patient_baselines (
 CREATE TABLE rehab_sessions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   program_exercise_id INT NOT NULL,
+  client_session_uuid VARCHAR(64) NULL UNIQUE, -- generated on the phone; makes re-sync idempotent
   session_date DATETIME NOT NULL,
-  status ENUM('VALID', 'ABSTAINED', 'INCOMPLETE', 'INVALID') NOT NULL,
-  abstain_reason VARCHAR(255) NULL,   -- filled only when status != VALID
+  duration_sec INT NULL,
+  -- Assessment outcome. Only VALID and PARTIAL carry measurements/scores.
+  --   VALID           assessed successfully
+  --   PARTIAL         reliable, but some metrics could not be assessed (listed in unassessed_metrics)
+  --   LOW_CONFIDENCE  landmarks/tracking too unreliable -> abstained
+  --   INVALID         recording unusable (person out of frame, wrong camera angle, ...) -> abstained
+  --   UNSUPPORTED     movement not recognised as the assigned exercise -> abstained
+  --   INCOMPLETE      no complete repetition was captured -> abstained
+  --   ABSTAINED       legacy generic abstention
+  status ENUM('VALID', 'PARTIAL', 'LOW_CONFIDENCE', 'INVALID', 'UNSUPPORTED', 'INCOMPLETE', 'ABSTAINED') NOT NULL,
+  abstain_reason VARCHAR(255) NULL,   -- filled only when status != VALID/PARTIAL
   confidence DECIMAL(4,3),            -- 0.000 - 1.000
+  sets_completed INT NULL,
+  reps_completed INT NULL,
   pain INT,                           -- 0-10
   discomfort INT,                     -- 0-10
   difficulty INT,                     -- 1-10
   injury_note TEXT,
-  overall_score DECIMAL(5,2) NULL,    -- NULL unless status = VALID
+  overall_score DECIMAL(5,2) NULL,    -- NULL unless status is VALID or PARTIAL
+  analysis_method VARCHAR(20) NULL,   -- 'temporal' | 'threshold'
+  capture_quality TEXT NULL,          -- JSON: camera-setup checks recorded before the set
+  assessed_metrics VARCHAR(255) NULL, -- comma-separated
+  unassessed_metrics VARCHAR(255) NULL,
   synced_at DATETIME NULL,
-  FOREIGN KEY (program_exercise_id) REFERENCES program_exercises(id) ON DELETE CASCADE
+  FOREIGN KEY (program_exercise_id) REFERENCES program_exercises(id) ON DELETE CASCADE,
+  INDEX idx_pe_date (program_exercise_id, session_date)
 );
 
 CREATE TABLE session_repetitions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   session_id INT NOT NULL,
   repetition_number INT NOT NULL,
+  start_ms BIGINT NULL,
+  end_ms BIGINT NULL,
+  angle_trace MEDIUMTEXT NULL, -- JSON [[timestampMs, angleDeg], ...] of the primary joint, downsampled
   FOREIGN KEY (session_id) REFERENCES rehab_sessions(id) ON DELETE CASCADE
 );
 
@@ -156,6 +198,34 @@ CREATE TABLE repetition_metrics (
   value DECIMAL(8,2),
   expected_value DECIMAL(8,2),
   status VARCHAR(30),                 -- 'MET','BELOW_TARGET','ABOVE_TARGET','FLAGGED'
+  FOREIGN KEY (repetition_id) REFERENCES session_repetitions(id) ON DELETE CASCADE
+);
+
+-- Phase-level results for one repetition (e.g. 'lowering' took 1.2 s and
+-- reached 95 deg). This is what lets the clinician see WHERE in the
+-- movement an error happened, not just that the rep scored badly.
+CREATE TABLE repetition_phases (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  repetition_id INT NOT NULL,
+  phase_name VARCHAR(40) NOT NULL,
+  start_ms BIGINT NOT NULL,
+  end_ms BIGINT NOT NULL,
+  min_angle DECIMAL(6,2) NULL,
+  max_angle DECIMAL(6,2) NULL,
+  status VARCHAR(30) NULL,            -- 'OK' | 'FLAGGED'
+  FOREIGN KEY (repetition_id) REFERENCES session_repetitions(id) ON DELETE CASCADE
+);
+
+-- Execution errors the AUTOMATED assessment flagged. Never edited: a
+-- clinician's correction lives in clinician_reviews and the 'effective'
+-- assessment is computed from both, so the original is always preserved.
+CREATE TABLE repetition_errors (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  repetition_id INT NOT NULL,
+  error_code VARCHAR(60) NOT NULL,    -- e.g. 'insufficient_rom', 'trunk_lean', 'too_fast', 'jerky_motion', 'asymmetry'
+  phase_name VARCHAR(40) NULL,
+  severity ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium',
+  detail VARCHAR(255) NULL,
   FOREIGN KEY (repetition_id) REFERENCES session_repetitions(id) ON DELETE CASCADE
 );
 
@@ -179,24 +249,52 @@ CREATE TABLE progression_suggestions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   program_id INT NOT NULL,
   exercise_id INT NOT NULL,
+  kind ENUM('PROGRESS', 'REVIEW_DETERIORATION', 'REVIEW_PLATEAU', 'REVIEW_PAIN') NOT NULL DEFAULT 'PROGRESS',
+  source ENUM('system', 'patient_app') NOT NULL DEFAULT 'system',
   suggestion TEXT NOT NULL,
   reason TEXT NOT NULL,
-  status ENUM('PENDING', 'APPROVED', 'REJECTED', 'MODIFIED') NOT NULL DEFAULT 'PENDING',
+  evidence_json LONGTEXT NULL,          -- the longitudinal analysis snapshot that triggered this
+  proposed_sets INT NULL,
+  proposed_repetitions INT NULL,
+  status ENUM('PENDING', 'APPROVED', 'REJECTED', 'MODIFIED', 'OBSERVE') NOT NULL DEFAULT 'PENDING',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_by INT NULL,
+  reviewed_at DATETIME NULL,
+  review_note TEXT NULL,
   FOREIGN KEY (program_id) REFERENCES rehabilitation_programs(id) ON DELETE CASCADE,
-  FOREIGN KEY (exercise_id) REFERENCES exercises(id)
+  FOREIGN KEY (exercise_id) REFERENCES exercises(id),
+  FOREIGN KEY (reviewed_by) REFERENCES users(id)
 );
 
+-- Every clinician review action is one row: who, when, what. The original
+-- automated assessment is never overwritten (see repetition_errors).
 CREATE TABLE clinician_reviews (
   id INT PRIMARY KEY AUTO_INCREMENT,
   session_id INT NOT NULL,
   clinician_id INT NOT NULL,
-  decision VARCHAR(60),         -- e.g. 'corrected_assessment'
-  correction TEXT,              -- e.g. "Poor ROM -> Acceptable"
+  action ENUM('NOTE', 'DISMISS_ERROR', 'CONFIRM_ERROR', 'ADD_ERROR', 'ADJUST_SCORE') NOT NULL DEFAULT 'NOTE',
+  decision VARCHAR(60),         -- legacy free-text field, kept for compatibility
+  correction TEXT,              -- legacy free-text field, kept for compatibility
+  error_id INT NULL,            -- target of DISMISS_ERROR / CONFIRM_ERROR
+  repetition_number INT NULL,   -- for ADD_ERROR
+  error_code VARCHAR(60) NULL,  -- for ADD_ERROR
+  adjusted_score DECIMAL(5,2) NULL, -- for ADJUST_SCORE
   notes TEXT,
+  feedback_to_patient TEXT NULL,    -- the only review text the patient app shows
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (session_id) REFERENCES rehab_sessions(id) ON DELETE CASCADE,
-  FOREIGN KEY (clinician_id) REFERENCES users(id)
+  FOREIGN KEY (clinician_id) REFERENCES users(id),
+  FOREIGN KEY (error_id) REFERENCES repetition_errors(id) ON DELETE SET NULL
+);
+
+-- Optional raw video, stored ONLY if the patient explicitly consented.
+CREATE TABLE session_videos (
+  session_id INT PRIMARY KEY,
+  file_path VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(60) NOT NULL,
+  size_bytes INT NOT NULL,
+  uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES rehab_sessions(id) ON DELETE CASCADE
 );
 
 CREATE TABLE program_changes (

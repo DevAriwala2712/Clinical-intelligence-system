@@ -1,579 +1,436 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api, metricLabel } from '../api';
 
-export default function ProtocolBuilderView({ showToast }) {
-  const [activeTab, setActiveTab] = useState('builder'); // 'catalog' or 'builder'
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+export default function ProtocolBuilderView({ token, patientId, onNavigate, showToast }) {
+  const [patients, setPatients] = useState([]);
+  const [pathways, setPathways] = useState([]);
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Protocol specs
-  const [selectedExercise, setSelectedExercise] = useState({
-    name: 'Terminal Knee Extension',
-    tag: 'Active Focus',
-    subtext: 'Right Knee (Post-Surgical Anterior Axis)',
-    plane: 'Sagittal',
-  });
+  // Form state
+  const [selectedPatientId, setSelectedPatientId] = useState(patientId || '');
+  const [selectedPathwayId, setSelectedPathwayId] = useState('');
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
+  const [selectedExercises, setSelectedExercises] = useState([]); // [{ exerciseId, sets, repetitions, criteria: [...] }]
+  const [saving, setSaving] = useState(false);
 
-  const [sets, setSets] = useState(3);
-  const [reps, setReps] = useState(12);
-  const [holdSec, setHoldSec] = useState(3);
-  const [restSec, setRestSec] = useState(60);
-  const [bandColor, setBandColor] = useState('Medium Red (15-20 lbs)');
+  useEffect(() => {
+    async function init() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [patList, pathList, exList] = await Promise.all([
+          api.listPatients(token),
+          api.listPathways(token),
+          api.listExercises(token),
+        ]);
+        setPatients(patList);
+        setPathways(pathList);
+        setExercises(exList);
 
-  // ML Gating Criteria
-  const [romMin, setRomMin] = useState(0);
-  const [romMax, setRomMax] = useState(115);
-  const [weightRom, setWeightRom] = useState(45);
-  const [weightTempo, setWeightTempo] = useState(30);
-  const [weightComp, setWeightComp] = useState(25);
+        if (!selectedPatientId && patList.length > 0) {
+          setSelectedPatientId(patList[0].id);
+        }
 
-  const [tempoConc, setTempoConc] = useState(1.5);
-  const [tempoEcc, setTempoEcc] = useState(3.0);
-  const [valgusLimit, setValgusLimit] = useState(4.0);
+        if (pathList.length > 0) {
+          const defaultPathway = pathList[0];
+          setSelectedPathwayId(defaultPathway.id);
+          // Pre-populate with pathway's exercises
+          const initialExs = exList.filter((e) => defaultPathway.exerciseIds?.includes(e.id)).map((e, idx) => ({
+            exerciseId: e.id,
+            name: e.name,
+            sets: 3,
+            repetitions: 10,
+            orderNumber: idx + 1,
+            criteria: e.criteria?.map((c) => ({
+              metricName: c.metricName,
+              targetValue: c.targetValue,
+              minimumValue: c.minimumValue,
+              maximumValue: c.maximumValue,
+              unit: c.unit,
+            })) || [],
+          }));
+          setSelectedExercises(initialExs);
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to initialize protocol builder');
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
+  }, [token]);
 
-  const exercises = [
-    {
-      id: 'tke',
-      name: 'Terminal Knee Extension (TKE)',
-      focus: 'Lower Extremity',
-      tag: 'Active Focus',
-      subtext: 'Closed-chain quad isolation with elastic band overload',
-      plane: 'Sagittal',
-    },
-    {
-      id: 'split-squat',
-      name: 'Single-Leg Bulgarian Split Squat',
-      focus: 'Lower Extremity',
-      tag: 'Strength & Balance',
-      subtext: 'Unilateral load, depth validation at 90° knee flexion',
-      plane: 'Frontal / Sagittal',
-    },
-    {
-      id: 'rdl',
-      name: 'Romanian Deadlift (Eccentric)',
-      focus: 'Hamstring Deceleration',
-      tag: 'Hamstring Decel',
-      subtext: '4s tempo descent with pelvic level alignment scoring',
-      plane: 'Sagittal',
-    },
-    {
-      id: 'side-plank',
-      name: 'Side Plank with Hip Abduction',
-      focus: 'Proprioception',
-      tag: 'Coronal Stability',
-      subtext: 'Coronal stability with valgus anti-compensation gating',
-      plane: 'Coronal',
-    },
-  ];
-
-  const filteredExercises = exercises.filter((ex) => {
-    const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          ex.subtext.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = categoryFilter === 'All' || ex.focus === categoryFilter;
-    return matchesSearch && matchesCat;
-  });
-
-  const handleSaveProtocol = () => {
-    showToast(`Deployed updated criteria for ${selectedExercise.name} to patient sensor`, 'verified');
+  const handlePathwayChange = (newPathwayId) => {
+    setSelectedPathwayId(newPathwayId);
+    const pw = pathways.find((p) => p.id === Number(newPathwayId));
+    if (pw) {
+      const newExs = exercises.filter((e) => pw.exerciseIds?.includes(e.id)).map((e, idx) => ({
+        exerciseId: e.id,
+        name: e.name,
+        sets: 3,
+        repetitions: 10,
+        orderNumber: idx + 1,
+        criteria: e.criteria?.map((c) => ({
+          metricName: c.metricName,
+          targetValue: c.targetValue,
+          minimumValue: c.minimumValue,
+          maximumValue: c.maximumValue,
+          unit: c.unit,
+        })) || [],
+      }));
+      setSelectedExercises(newExs);
+    }
   };
 
+  const handleToggleExercise = (ex) => {
+    const exists = selectedExercises.some((item) => item.exerciseId === ex.id);
+    if (exists) {
+      if (selectedExercises.length === 1) {
+        showToast('A programme must contain at least one exercise', 'error');
+        return;
+      }
+      setSelectedExercises(selectedExercises.filter((item) => item.exerciseId !== ex.id));
+    } else {
+      if (selectedExercises.length >= 8) {
+        showToast('A programme can contain at most 8 exercises', 'error');
+        return;
+      }
+      setSelectedExercises([
+        ...selectedExercises,
+        {
+          exerciseId: ex.id,
+          name: ex.name,
+          sets: 3,
+          repetitions: 10,
+          orderNumber: selectedExercises.length + 1,
+          criteria: ex.criteria?.map((c) => ({
+            metricName: c.metricName,
+            targetValue: c.targetValue,
+            minimumValue: c.minimumValue,
+            maximumValue: c.maximumValue,
+            unit: c.unit,
+          })) || [],
+        },
+      ]);
+    }
+  };
+
+  const updateExerciseConfig = (exerciseId, field, value) => {
+    setSelectedExercises((prev) =>
+      prev.map((ex) => (ex.exerciseId === exerciseId ? { ...ex, [field]: value } : ex))
+    );
+  };
+
+  const updateCriterionValue = (exerciseId, metricName, field, value) => {
+    setSelectedExercises((prev) =>
+      prev.map((ex) => {
+        if (ex.exerciseId !== exerciseId) return ex;
+        const newCriteria = ex.criteria.map((c) => {
+          if (c.metricName !== metricName) return c;
+          return {
+            ...c,
+            [field]: value === '' ? null : Number(value),
+          };
+        });
+        return { ...ex, criteria: newCriteria };
+      })
+    );
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedPatientId) {
+      showToast('Please select a patient for this prescription', 'error');
+      return;
+    }
+    if (selectedExercises.length === 0) {
+      showToast('Select at least one exercise', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        patientId: Number(selectedPatientId),
+        pathwayId: Number(selectedPathwayId),
+        sessionsPerWeek: Number(sessionsPerWeek),
+        exercises: selectedExercises.map((ex, idx) => ({
+          exerciseId: ex.exerciseId,
+          sets: Number(ex.sets),
+          repetitions: Number(ex.repetitions),
+          orderNumber: idx + 1,
+          criteria: ex.criteria.map((c) => ({
+            metricName: c.metricName,
+            targetValue: c.targetValue !== null ? Number(c.targetValue) : null,
+            minimumValue: c.minimumValue !== null ? Number(c.minimumValue) : null,
+            maximumValue: c.maximumValue !== null ? Number(c.maximumValue) : null,
+          })),
+        })),
+      };
+
+      const res = await api.createProgram(token, payload);
+      showToast('Rehabilitation programme assigned and active for patient', 'verified');
+      onNavigate('patient-profile', { patientId: Number(selectedPatientId) });
+    } catch (err) {
+      showToast(err.message || 'Failed to assign programme', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-on-surface-variant">
+        <span className="material-symbols-outlined text-4xl animate-spin mb-2">progress_activity</span>
+        <p className="text-xs">Loading exercise catalog & clinical criteria...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-28 gap-5">
-      {/* Dynamic Notification / Top Protocol Draft Banner */}
-      <section className="bg-surface-container-high text-on-surface rounded-2xl p-5 shadow-sm border border-surface-container">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[20px]">clinical_notes</span>
-            <span className="font-label-mono text-xs uppercase tracking-wider text-primary font-bold">
-              Protocol Draft v2.1
-            </span>
-          </div>
-          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-badge text-xs font-semibold">
-            Draft Active
-          </span>
+    <div className="flex flex-col w-full gap-6">
+      {/* Header Banner */}
+      <section className="bg-surface-container-lowest rounded-xl p-5 border border-surface-container shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="material-symbols-outlined text-primary text-xl">assignment_add</span>
+          <span className="text-xs uppercase font-bold text-tertiary">Clinical Program Assignment</span>
         </div>
-        <h1 className="font-headline-lg-mobile md:font-headline-lg text-on-surface font-bold tracking-tight">
-          Phase 3 Knee Stabilization
-        </h1>
-        <div className="flex items-center gap-3 mt-1.5">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-secondary"></span>
-            <p className="font-body-sm text-xs text-on-surface-variant font-semibold">Elena Rostova</p>
-          </div>
-          <span className="text-outline-variant">•</span>
-          <span className="font-label-md text-xs text-on-surface-variant">Post-Op ACL (Day 45)</span>
-        </div>
+        <h1 className="text-xl font-bold text-on-surface">Rehabilitation Program & Criteria Builder</h1>
+        <p className="text-xs text-on-surface-variant mt-0.5">
+          Select pathway, configure patient-specific range of motion targets, tempo limits, and assign frequency.
+        </p>
       </section>
 
-      {/* Segmented Controller Tabs */}
-      <section className="bg-surface-container-low p-1.5 rounded-2xl flex items-center shadow-sm border border-surface-container">
-        <button
-          onClick={() => setActiveTab('catalog')}
-          className={`flex-1 py-2.5 px-4 rounded-xl font-label-md text-sm transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'catalog'
-              ? 'bg-surface-container-lowest text-primary font-bold shadow-sm'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[20px]">library_add</span>
-          <span>Catalog ({exercises.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('builder')}
-          className={`flex-1 py-2.5 px-4 rounded-xl font-label-md text-sm transition-all flex items-center justify-center gap-2 ${
-            activeTab === 'builder'
-              ? 'bg-surface-container-lowest text-primary font-bold shadow-sm'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[20px]">tune</span>
-          <span>ML Criteria Engine</span>
-          <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-        </button>
-      </section>
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl">
+          {error}
+        </div>
+      )}
 
-      {/* View 1: Catalog Selection Drawer */}
-      {activeTab === 'catalog' && (
-        <section className="space-y-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-surface-container-lowest text-on-surface placeholder-on-surface-variant/60 font-body-sm text-sm rounded-xl shadow-sm border border-surface-container focus:outline-none focus:border-primary transition-colors"
-              placeholder="Search kinematics (e.g., Squat, ROM, Extension)..."
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Prescription Target Section */}
+        <section className="bg-surface-container-lowest rounded-xl p-5 border border-surface-container shadow-sm space-y-4 text-xs">
+          <h2 className="text-sm font-bold text-on-surface border-b border-surface-container pb-2">
+            1. Patient & Pathway Prescription
+          </h2>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 select-none">
-            {['All', 'Lower Extremity', 'Hamstring Deceleration', 'Proprioception'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3.5 py-1.5 rounded-full font-label-md text-xs whitespace-nowrap transition-all ${
-                  categoryFilter === cat
-                    ? 'bg-primary text-white font-bold shadow-sm'
-                    : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
-                }`}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-on-surface-variant font-semibold mb-1">Assign to Patient</label>
+              <select
+                value={selectedPatientId}
+                onChange={(e) => setSelectedPatientId(e.target.value)}
+                className="w-full bg-surface-container-low border border-surface-container rounded-lg p-2 font-semibold"
+                required
               >
-                {cat}
-              </button>
-            ))}
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-on-surface-variant font-semibold mb-1">Rehabilitation Pathway</label>
+              <select
+                value={selectedPathwayId}
+                onChange={(e) => handlePathwayChange(e.target.value)}
+                className="w-full bg-surface-container-low border border-surface-container rounded-lg p-2 font-semibold"
+                required
+              >
+                {pathways.map((pw) => (
+                  <option key={pw.id} value={pw.id}>
+                    {pw.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-on-surface-variant font-semibold mb-1">Prescribed Frequency (Sessions / Week)</label>
+              <input
+                type="number"
+                min="1"
+                max="7"
+                value={sessionsPerWeek}
+                onChange={(e) => setSessionsPerWeek(e.target.value)}
+                className="w-full bg-surface-container-low border border-surface-container rounded-lg p-2 font-mono font-bold"
+                required
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Exercise Selection Catalog */}
+        <section className="bg-surface-container-lowest rounded-xl p-5 border border-surface-container shadow-sm space-y-4 text-xs">
+          <div className="flex items-center justify-between border-b border-surface-container pb-2">
+            <h2 className="text-sm font-bold text-on-surface">2. Select Supported Exercises</h2>
+            <span className="text-on-surface-variant">{selectedExercises.length} selected</span>
           </div>
 
-          {/* Catalog Exercise List */}
-          <div className="space-y-3">
-            {filteredExercises.map((ex) => {
-              const isSelected = selectedExercise.name.includes(ex.name) || ex.name.includes(selectedExercise.name);
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {exercises.map((ex) => {
+              const isSelected = selectedExercises.some((item) => item.exerciseId === ex.id);
               return (
                 <div
                   key={ex.id}
-                  className={`bg-surface-container-lowest p-4 rounded-xl shadow-sm border transition-all relative overflow-hidden flex items-center justify-between gap-3 ${
-                    isSelected ? 'border-primary ring-1 ring-primary/30' : 'border-surface-container'
+                  onClick={() => handleToggleExercise(ex)}
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-surface-container bg-surface-container-low opacity-75 hover:opacity-100'
                   }`}
                 >
-                  {isSelected && <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-primary"></div>}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-primary-fixed text-on-primary-fixed font-badge text-xs px-2 py-0.5 rounded font-semibold">
-                        {ex.tag}
-                      </span>
-                      <span className="font-label-mono text-xs text-tertiary">
-                        ML Tracked: {ex.plane}
-                      </span>
-                    </div>
-                    <h2 className="font-headline-sm text-base font-bold text-on-surface">{ex.name}</h2>
-                    <p className="font-body-sm text-xs text-on-surface-variant">{ex.subtext}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-sm text-on-surface">{ex.name}</span>
+                    <span
+                      className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
+                        isSelected ? 'bg-primary text-white' : 'border border-surface-container bg-surface-container-lowest'
+                      }`}
+                    >
+                      {isSelected ? '✓' : ''}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => {
-                      setSelectedExercise(ex);
-                      setActiveTab('builder');
-                      showToast(`Selected ${ex.name} for ML Criteria calibration`, 'tune');
-                    }}
-                    className="bg-surface-container text-primary p-2.5 rounded-xl hover:bg-primary hover:text-white transition-all shrink-0 flex items-center gap-1 font-label-md text-xs font-semibold"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">tune</span>
-                    <span className="hidden sm:inline">Calibrate</span>
-                  </button>
+                  <p className="text-[11px] text-on-surface-variant line-clamp-2">{ex.description}</p>
+                  <div className="mt-2 text-[10px] text-tertiary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">videocam</span>
+                    <span>Camera: {ex.cameraView} view</span>
+                  </div>
                 </div>
               );
             })}
           </div>
         </section>
-      )}
 
-      {/* View 2: Active Protocol & ML Criteria Engine */}
-      {activeTab === 'builder' && (
-        <section className="space-y-4">
-          {/* Active Selected Exercise Card */}
-          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-surface-container">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-label-mono text-xs text-tertiary flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px]">sensors</span>
-                Vision Pipeline: 60 FPS On-Device
-              </span>
-              <button
-                onClick={() => setActiveTab('catalog')}
-                className="text-primary font-label-md text-xs font-semibold flex items-center gap-1 hover:underline"
+        {/* Prescription Criteria & Volume Configuration */}
+        <section className="bg-surface-container-lowest rounded-xl p-5 border border-surface-container shadow-sm space-y-4 text-xs">
+          <h2 className="text-sm font-bold text-on-surface border-b border-surface-container pb-2">
+            3. Prescription Criteria & Target Volume per Exercise
+          </h2>
+
+          <div className="space-y-4">
+            {selectedExercises.map((item) => (
+              <div
+                key={item.exerciseId}
+                className="p-4 rounded-xl border border-surface-container bg-surface-container-low space-y-3"
               >
-                <span>Change Exercise</span>
-                <span className="material-symbols-outlined text-[16px]">expand_more</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
-                <span className="material-symbols-outlined text-[26px]">accessibility_new</span>
-              </div>
-              <div>
-                <h2 className="font-headline-sm text-lg font-bold text-on-surface leading-tight">
-                  {selectedExercise.name}
-                </h2>
-                <p className="font-body-sm text-xs text-on-surface-variant">
-                  Right Knee (Post-Surgical Anterior Axis)
-                </p>
-              </div>
-            </div>
-
-            {/* Prescribed Volume & Load Form Grid */}
-            <div className="mt-4 pt-2 bg-surface-container-low p-4 rounded-xl border border-surface-container">
-              <span className="font-label-mono text-xs uppercase text-on-surface-variant block mb-2.5 font-bold">
-                Dosage & Volume Specifications
-              </span>
-              <div className="grid grid-cols-4 gap-2.5 text-center">
-                <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm border border-surface-container">
-                  <span className="font-label-mono text-[11px] text-on-surface-variant block">Sets</span>
-                  <input
-                    type="number"
-                    value={sets}
-                    onChange={(e) => setSets(Number(e.target.value))}
-                    className="w-full text-center font-display-metric text-xl font-bold text-on-surface bg-transparent focus:outline-none"
-                  />
-                </div>
-                <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm border border-surface-container">
-                  <span className="font-label-mono text-[11px] text-on-surface-variant block">Reps</span>
-                  <input
-                    type="number"
-                    value={reps}
-                    onChange={(e) => setReps(Number(e.target.value))}
-                    className="w-full text-center font-display-metric text-xl font-bold text-on-surface bg-transparent focus:outline-none"
-                  />
-                </div>
-                <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm border border-surface-container">
-                  <span className="font-label-mono text-[11px] text-on-surface-variant block">Hold (s)</span>
-                  <input
-                    type="number"
-                    value={holdSec}
-                    onChange={(e) => setHoldSec(Number(e.target.value))}
-                    className="w-full text-center font-display-metric text-xl font-bold text-on-surface bg-transparent focus:outline-none"
-                  />
-                </div>
-                <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-sm border border-surface-container">
-                  <span className="font-label-mono text-[11px] text-on-surface-variant block">Rest (s)</span>
-                  <input
-                    type="number"
-                    value={restSec}
-                    onChange={(e) => setRestSec(Number(e.target.value))}
-                    className="w-full text-center font-display-metric text-xl font-bold text-on-surface bg-transparent focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-3 bg-surface-container-lowest p-3 rounded-lg shadow-sm border border-surface-container flex items-center justify-between">
-                <span className="font-label-md text-xs text-on-surface-variant font-semibold">Band Resistance:</span>
-                <select
-                  value={bandColor}
-                  onChange={(e) => setBandColor(e.target.value)}
-                  className="bg-surface-container font-label-mono text-xs font-semibold text-on-surface px-2.5 py-1 rounded-md border-none focus:outline-none"
-                >
-                  <option>Light Yellow (8-12 lbs)</option>
-                  <option>Medium Red (15-20 lbs)</option>
-                  <option>Heavy Blue (25-30 lbs)</option>
-                  <option>Extra-Heavy Silver (35+ lbs)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Advanced ML Calibrated Criteria */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary text-[22px]">smart_toy</span>
-                <h2 className="font-headline-sm text-base font-bold text-on-surface">ML Kinematic Gating Criteria</h2>
-              </div>
-              <span className="bg-secondary/15 text-secondary px-2.5 py-0.5 rounded-full font-badge text-xs font-semibold">
-                3 Gated Metrics
-              </span>
-            </div>
-            <p className="font-body-sm text-xs text-on-surface-variant">
-              Threshold tolerances for on-device machine learning evaluation and rep auto-validation.
-            </p>
-
-            {/* Metric 1: ROM Range */}
-            <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-surface-container space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center font-label-mono text-xs font-bold">
-                    M1
-                  </span>
-                  <div>
-                    <h3 className="font-headline-sm text-sm font-bold text-on-surface">Range of Motion (ROM)</h3>
-                    <p className="font-label-mono text-xs text-on-surface-variant">Sagittal Knee Angle Envelope</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-display-metric text-xl text-primary font-bold">
-                    {romMin}° - {romMax}°
-                  </span>
-                  <span className="block font-label-mono text-[10px] text-on-surface-variant uppercase">Target Envelope</span>
-                </div>
-              </div>
-
-              {/* Dual-Handle Slider Simulator */}
-              <div className="pt-3 pb-1">
-                <div className="relative w-full h-8 flex items-center">
-                  <div className="absolute inset-x-0 h-2 bg-surface-container rounded-full"></div>
-                  <div
-                    className="absolute h-2 bg-primary/30 rounded-full"
-                    style={{ left: `${(romMin / 140) * 100}%`, right: `${100 - (romMax / 140) * 100}%` }}
-                  ></div>
-                  <div
-                    className="absolute right-0 h-2 bg-error/30 rounded-r-full"
-                    style={{ width: `${Math.max(0, 100 - (romMax / 140) * 100)}%` }}
-                  ></div>
-
-                  {/* Left Handle */}
-                  <div
-                    className="absolute -translate-x-1/2 flex flex-col items-center"
-                    style={{ left: `${(romMin / 140) * 100}%` }}
-                  >
-                    <span className="absolute -top-6 bg-surface-container-highest px-1.5 py-0.5 rounded font-label-mono text-[10px] text-on-surface font-semibold">
-                      {romMin}°
-                    </span>
-                    <div className="w-5 h-5 rounded-full bg-white shadow-md border-2 border-primary flex items-center justify-center cursor-pointer">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-container pb-2">
+                  <span className="font-bold text-sm text-on-surface">{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-on-surface-variant font-semibold">Sets:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={item.sets}
+                        onChange={(e) => updateExerciseConfig(item.exerciseId, 'sets', Number(e.target.value))}
+                        className="w-16 bg-surface-container-lowest border border-surface-container rounded-lg p-1.5 font-mono text-center font-bold"
+                        required
+                      />
                     </div>
-                  </div>
-
-                  {/* Right Handle Slider */}
-                  <div
-                    className="absolute -translate-x-1/2 flex flex-col items-center"
-                    style={{ left: `${(romMax / 140) * 100}%` }}
-                  >
-                    <span className="absolute -top-6 bg-primary text-white px-1.5 py-0.5 rounded font-label-mono text-[10px] font-bold">
-                      {romMax}°
-                    </span>
-                    <div className="w-5 h-5 rounded-full bg-white shadow-md border-2 border-primary flex items-center justify-center cursor-pointer">
-                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-on-surface-variant font-semibold">Reps:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={item.repetitions}
+                        onChange={(e) => updateExerciseConfig(item.exerciseId, 'repetitions', Number(e.target.value))}
+                        className="w-16 bg-surface-container-lowest border border-surface-container rounded-lg p-1.5 font-mono text-center font-bold"
+                        required
+                      />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <label className="text-xs font-label-mono text-on-surface-variant flex items-center gap-2">
-                    <span>Min Ext:</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="30"
-                      value={romMin}
-                      onChange={(e) => setRomMin(Number(e.target.value))}
-                      className="w-full accent-primary"
-                    />
-                  </label>
-                  <label className="text-xs font-label-mono text-on-surface-variant flex items-center gap-2">
-                    <span>Flexion Max:</span>
-                    <input
-                      type="range"
-                      min="60"
-                      max="140"
-                      value={romMax}
-                      onChange={(e) => setRomMax(Number(e.target.value))}
-                      className="w-full accent-primary"
-                    />
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between text-on-surface-variant font-label-mono text-xs mt-2">
-                  <span>0° Full Ext</span>
-                  <span className="text-tertiary">Acceptable Envelope (0° - {romMax}°)</span>
-                  <span className="text-error">&gt;{romMax}° Pain Risk</span>
-                </div>
-              </div>
-
-              {/* Scoring Weight Slider */}
-              <div className="bg-surface-container-low p-3 rounded-xl flex items-center justify-between gap-3 border border-surface-container">
-                <div className="flex items-center gap-1.5 min-w-max">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">balance</span>
-                  <span className="font-label-md text-xs text-on-surface font-semibold">ML Scoring Weight:</span>
-                </div>
-                <div className="flex-1 flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={weightRom}
-                    onChange={(e) => setWeightRom(Number(e.target.value))}
-                    className="w-full h-1.5 bg-surface-container-highest accent-primary rounded-full cursor-pointer"
-                  />
-                  <span className="font-label-mono text-xs text-primary font-bold min-w-[36px] text-right">
-                    {weightRom}%
+                {/* Criteria overrides */}
+                <div>
+                  <span className="text-[11px] uppercase font-bold text-on-surface-variant block mb-2">
+                    Calibrated Criteria Thresholds (Clinician Overrides)
                   </span>
-                </div>
-              </div>
-            </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {item.criteria?.map((c) => (
+                      <div
+                        key={c.metricName}
+                        className="p-2.5 bg-surface-container-lowest rounded-lg border border-surface-container text-[11px] space-y-1"
+                      >
+                        <span className="font-semibold text-on-surface block truncate">
+                          {metricLabel(c.metricName)} ({c.unit || ''})
+                        </span>
 
-            {/* Metric 2: Tempo Cadence */}
-            <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-surface-container space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-tertiary-fixed text-tertiary flex items-center justify-center font-label-mono text-xs font-bold">
-                    M2
-                  </span>
-                  <div>
-                    <h3 className="font-headline-sm text-sm font-bold text-on-surface">Tempo Cadence Profiler</h3>
-                    <p className="font-label-mono text-xs text-on-surface-variant">Concentric vs Eccentric Control</p>
-                  </div>
-                </div>
-                <span className="font-display-metric text-lg text-tertiary font-bold">
-                  {tempoConc}s · 1.0s · {tempoEcc}s
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-surface-container-low p-3 rounded-lg border border-surface-container">
-                  <span className="font-label-mono text-[10px] text-on-surface-variant uppercase block">
-                    Concentric Lift Duration
-                  </span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="4.0"
-                      step="0.5"
-                      value={tempoConc}
-                      onChange={(e) => setTempoConc(Number(e.target.value))}
-                      className="w-full accent-tertiary"
-                    />
-                    <span className="font-label-mono text-xs font-bold text-on-surface min-w-[30px]">
-                      {tempoConc}s
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-surface-container-low p-3 rounded-lg border border-surface-container">
-                  <span className="font-label-mono text-[10px] text-on-surface-variant uppercase block">
-                    Eccentric Descent Duration
-                  </span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="range"
-                      min="1.0"
-                      max="6.0"
-                      step="0.5"
-                      value={tempoEcc}
-                      onChange={(e) => setTempoEcc(Number(e.target.value))}
-                      className="w-full accent-tertiary"
-                    />
-                    <span className="font-label-mono text-xs font-bold text-on-surface min-w-[30px]">
-                      {tempoEcc}s
-                    </span>
+                        <div className="grid grid-cols-3 gap-1 pt-1">
+                          {c.targetValue !== undefined && (
+                            <div>
+                              <span className="text-[9px] text-on-surface-variant block">Target</span>
+                              <input
+                                type="number"
+                                step="any"
+                                value={c.targetValue !== null ? c.targetValue : ''}
+                                onChange={(e) => updateCriterionValue(item.exerciseId, c.metricName, 'targetValue', e.target.value)}
+                                className="w-full bg-surface-container-low border border-surface-container rounded p-1 text-xs font-mono"
+                                placeholder="default"
+                              />
+                            </div>
+                          )}
+                          {c.minimumValue !== undefined && (
+                            <div>
+                              <span className="text-[9px] text-on-surface-variant block">Min</span>
+                              <input
+                                type="number"
+                                step="any"
+                                value={c.minimumValue !== null ? c.minimumValue : ''}
+                                onChange={(e) => updateCriterionValue(item.exerciseId, c.metricName, 'minimumValue', e.target.value)}
+                                className="w-full bg-surface-container-low border border-surface-container rounded p-1 text-xs font-mono"
+                                placeholder="min"
+                              />
+                            </div>
+                          )}
+                          {c.maximumValue !== undefined && (
+                            <div>
+                              <span className="text-[9px] text-on-surface-variant block">Max</span>
+                              <input
+                                type="number"
+                                step="any"
+                                value={c.maximumValue !== null ? c.maximumValue : ''}
+                                onChange={(e) => updateCriterionValue(item.exerciseId, c.metricName, 'maximumValue', e.target.value)}
+                                className="w-full bg-surface-container-low border border-surface-container rounded p-1 text-xs font-mono"
+                                placeholder="max"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-
-              <div className="bg-surface-container-low p-3 rounded-xl flex items-center justify-between gap-3 border border-surface-container">
-                <div className="flex items-center gap-1.5 min-w-max">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">balance</span>
-                  <span className="font-label-md text-xs text-on-surface font-semibold">ML Scoring Weight:</span>
-                </div>
-                <div className="flex-1 flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={weightTempo}
-                    onChange={(e) => setWeightTempo(Number(e.target.value))}
-                    className="w-full h-1.5 bg-surface-container-highest accent-tertiary rounded-full cursor-pointer"
-                  />
-                  <span className="font-label-mono text-xs text-tertiary font-bold min-w-[36px] text-right">
-                    {weightTempo}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Metric 3: Compensatory Threshold */}
-            <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-surface-container space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-8 h-8 rounded-lg bg-error-container text-error flex items-center justify-center font-label-mono text-xs font-bold">
-                    M3
-                  </span>
-                  <div>
-                    <h3 className="font-headline-sm text-sm font-bold text-on-surface">Compensatory Valgus Gating</h3>
-                    <p className="font-label-mono text-xs text-on-surface-variant">Frontal Plane Knee Collapse Limit</p>
-                  </div>
-                </div>
-                <span className="font-display-metric text-lg text-error font-bold">
-                  &lt;{valgusLimit}° Limit
-                </span>
-              </div>
-
-              <div className="bg-surface-container-low p-3 rounded-xl border border-surface-container">
-                <div className="flex items-center justify-between text-xs font-label-mono mb-1.5">
-                  <span>Frontal Valgus Deviation Tolerance</span>
-                  <span className="font-bold text-error">{valgusLimit}°</span>
-                </div>
-                <input
-                  type="range"
-                  min="1.0"
-                  max="10.0"
-                  step="0.5"
-                  value={valgusLimit}
-                  onChange={(e) => setValgusLimit(Number(e.target.value))}
-                  className="w-full accent-error"
-                />
-              </div>
-
-              <div className="bg-surface-container-low p-3 rounded-xl flex items-center justify-between gap-3 border border-surface-container">
-                <div className="flex items-center gap-1.5 min-w-max">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">balance</span>
-                  <span className="font-label-md text-xs text-on-surface font-semibold">ML Scoring Weight:</span>
-                </div>
-                <div className="flex-1 flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={weightComp}
-                    onChange={(e) => setWeightComp(Number(e.target.value))}
-                    className="w-full h-1.5 bg-surface-container-highest accent-error rounded-full cursor-pointer"
-                  />
-                  <span className="font-label-mono text-xs text-error font-bold min-w-[36px] text-right">
-                    {weightComp}%
-                  </span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Save & Deploy Protocol Button */}
-          <button
-            onClick={handleSaveProtocol}
-            className="w-full py-3.5 px-6 rounded-xl bg-primary text-on-primary font-headline-sm text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.99] transition-all"
-          >
-            <span className="material-symbols-outlined text-[22px]">publish</span>
-            <span>Save & Deploy Protocol to Elena&apos;s Mobile App</span>
-          </button>
         </section>
-      )}
+
+        {/* Submit Bar */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => onNavigate('overview')}
+            className="px-5 py-2.5 border border-surface-container text-xs rounded-xl hover:bg-surface-container"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl shadow hover:bg-primary-container disabled:opacity-50 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-sm">assignment_turned_in</span>
+            <span>{saving ? 'Assigning Protocol...' : 'Deploy Prescription to Patient App'}</span>
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

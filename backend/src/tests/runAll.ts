@@ -1,8 +1,19 @@
 // backend/src/tests/runAll.ts
 //
-// WHAT: the single entry point `npm test` runs. It imports and runs every
-// test file in this directory, in order.
-// WHY: keeps `npm test` working as ONE command instead of the developer
-// needing to remember every individual test file's path.
+// Single entry point for `npm test`: executes pure unit tests, analysis tests,
+// and live integration/security tests against the running server.
 
-import './securityTests';
+import { runAnalysisTests } from './analysisTests';
+
+async function main() {
+  console.log('=== RUNNING PURE ANALYSIS & UNIT TESTS ===');
+  runAnalysisTests();
+
+  console.log('\n=== RUNNING SECURITY & INTEGRATION TESTS ===');
+  await import('./securityTests');
+}
+
+main().catch((err) => {
+  console.error('Test run failed:', err);
+  process.exit(1);
+});

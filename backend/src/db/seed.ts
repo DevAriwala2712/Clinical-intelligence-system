@@ -1,20 +1,15 @@
 // seed.ts
 // Run with: npm run seed
-// Populates the MySQL database with demo accounts and the 5-exercise
-// catalog (Section 30/116). All demo records are clearly demo data - the
-// app itself supports creating real accounts/programs through the normal
-// register/createProgram endpoints; this script exists purely so the
-// end-to-end demo scenario in Section 116 has something to click through.
+// Populates the MySQL database with demo accounts, the 5-exercise
+// catalog, demo pathway, and initial assigned program.
 
 import bcrypt from 'bcryptjs';
 import { pool } from './pool';
 
-// Same 5 exercises as patient_app/lib/rehab/exercise_definitions.dart -
-// kept in sync manually for now (Section 59: MySQL stores the
-// synchronized, clinician-side normalized copy of the same catalog).
 const exercises = [
   {
     name: 'Sit-to-Stand',
+    engine_key: 'sit_to_stand',
     description: 'Rise from a seated position to standing, then return to sitting.',
     instructions: 'Sit on a stable chair, phone 2-3m away, side-on, full body visible.',
     camera_view: 'side',
@@ -30,6 +25,7 @@ const exercises = [
   },
   {
     name: 'Seated Knee Flexion',
+    engine_key: 'seated_knee_flexion',
     description: 'Extend the lower leg straight, then bend the knee back, while seated.',
     instructions: 'Sit side-on to the camera, 2m away, whole leg visible.',
     camera_view: 'side',
@@ -45,6 +41,7 @@ const exercises = [
   },
   {
     name: 'Shoulder Flexion',
+    engine_key: 'shoulder_flexion',
     description: 'Raise the straight arm forward and upward, then lower it back down.',
     instructions: 'Stand facing the camera, 2-3m away, torso and arms visible.',
     camera_view: 'front',
@@ -60,6 +57,7 @@ const exercises = [
   },
   {
     name: 'Elbow Flexion (Bicep Curl)',
+    engine_key: 'elbow_flexion',
     description: 'Bend the elbow to bring the hand toward the shoulder, then straighten fully.',
     instructions: 'Stand side-on to the camera, arm visible shoulder to hand.',
     camera_view: 'side',
@@ -74,6 +72,7 @@ const exercises = [
   },
   {
     name: 'Squat-to-Chair',
+    engine_key: 'squat_to_chair',
     description: 'Lower into a controlled squat until lightly touching a chair, then stand back up.',
     instructions: 'Stand in front of a chair, side-on to the camera, 2-3m away.',
     camera_view: 'side',
@@ -92,6 +91,30 @@ const exercises = [
 async function seed() {
   console.log('Seeding database...');
 
+  // Clean existing tables (in foreign key dependency order)
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+  await pool.query('TRUNCATE TABLE session_videos');
+  await pool.query('TRUNCATE TABLE clinician_reviews');
+  await pool.query('TRUNCATE TABLE progression_suggestions');
+  await pool.query('TRUNCATE TABLE landmark_points');
+  await pool.query('TRUNCATE TABLE repetition_errors');
+  await pool.query('TRUNCATE TABLE repetition_phases');
+  await pool.query('TRUNCATE TABLE repetition_metrics');
+  await pool.query('TRUNCATE TABLE session_repetitions');
+  await pool.query('TRUNCATE TABLE rehab_sessions');
+  await pool.query('TRUNCATE TABLE program_exercise_criteria');
+  await pool.query('TRUNCATE TABLE program_changes');
+  await pool.query('TRUNCATE TABLE program_exercises');
+  await pool.query('TRUNCATE TABLE rehabilitation_programs');
+  await pool.query('TRUNCATE TABLE pathway_exercises');
+  await pool.query('TRUNCATE TABLE exercise_criteria');
+  await pool.query('TRUNCATE TABLE exercises');
+  await pool.query('TRUNCATE TABLE rehabilitation_pathways');
+  await pool.query('TRUNCATE TABLE clinician_profiles');
+  await pool.query('TRUNCATE TABLE patient_profiles');
+  await pool.query('TRUNCATE TABLE users');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+
   // ---- Demo accounts ----
   const passwordHash = await bcrypt.hash('DemoPass123', 10);
 
@@ -108,14 +131,15 @@ async function seed() {
   );
   const patientId = (patientResult as any).insertId;
   await pool.query(
-    'INSERT INTO patient_profiles (user_id, age, sex, height_cm, clinician_id) VALUES (?, ?, ?, ?, ?)',
-    [patientId, 45, 'female', 165.0, clinicianId]
+    `INSERT INTO patient_profiles (user_id, age, sex, height_cm, clinician_id, rehab_goal, injury_history, video_upload_consent)
+     VALUES (?, 45, 'female', 165.0, ?, 'Regain knee mobility and return to daily walking pain-free', 'Post-arthroscopy recovery 4 weeks ago', TRUE)`,
+    [patientId, clinicianId]
   );
 
   // ---- Pathway ----
   const [pathwayResult] = await pool.query(
     'INSERT INTO rehabilitation_pathways (name, description) VALUES (?, ?)',
-    ['Knee Mobility Rehabilitation', 'Demo educational pathway for lower-limb mobility. Not a validated clinical protocol - criteria are set per-patient by the treating clinician.']
+    ['Knee Mobility Rehabilitation', 'Structured protocol for lower-limb post-operative rehabilitation and functional mobility.']
   );
   const pathwayId = (pathwayResult as any).insertId;
 
@@ -123,9 +147,9 @@ async function seed() {
   const exerciseIds: number[] = [];
   for (const ex of exercises) {
     const [exResult] = await pool.query(
-      `INSERT INTO exercises (name, description, instructions, camera_view, required_landmarks, phases)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [ex.name, ex.description, ex.instructions, ex.camera_view, ex.required_landmarks, ex.phases]
+      `INSERT INTO exercises (name, engine_key, description, instructions, camera_view, required_landmarks, phases)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [ex.name, ex.engine_key, ex.description, ex.instructions, ex.camera_view, ex.required_landmarks, ex.phases]
     );
     const exerciseId = (exResult as any).insertId;
     exerciseIds.push(exerciseId);
@@ -141,10 +165,10 @@ async function seed() {
     }
   }
 
-  // ---- Assign the pathway's exercises to the demo patient as a program ----
+  // ---- Assign the pathway's exercises to the demo patient as an active program ----
   const [programResult] = await pool.query(
-    `INSERT INTO rehabilitation_programs (patient_id, clinician_id, pathway_id, status, start_date)
-     VALUES (?, ?, ?, 'active', CURDATE())`,
+    `INSERT INTO rehabilitation_programs (patient_id, clinician_id, pathway_id, status, sessions_per_week, start_date)
+     VALUES (?, ?, ?, 'active', 3, CURDATE())`,
     [patientId, clinicianId, pathwayId]
   );
   const programId = (programResult as any).insertId;
