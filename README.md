@@ -1,5 +1,9 @@
 # Clinician-Calibrated Rehabilitation Quality and Progression System
 
+> 🌐 **Live Clinician Portal (Works 24/7)**: **[https://devariwala2712.github.io/Clinical-intelligence-system/](https://devariwala2712.github.io/Clinical-intelligence-system/)**  
+> Access the live interactive dashboard from any web browser without needing to run a local development environment.  
+> **Pre-loaded Demo Login**: Email: `clinician@demo.com` | Password: `DemoPass123`
+
 A comprehensive, clinician-in-the-loop telerehabilitation platform that transforms consumer phone cameras into objective clinical biomechanics measurement devices.
 
 Rather than acting as a simple fitness repetition counter, this system analyses **movement quality** (Range of Motion, Tempo, Control/Smoothness via normalized jerk, Bilateral Symmetry, and Exercise-Specific Compensations), enforces **strict capture-quality abstention**, calculates **longitudinal progression trajectories** via Theil-Sen trend estimation, and submits explainable progression suggestions to the treating physiotherapist for mandatory clinical governance.
