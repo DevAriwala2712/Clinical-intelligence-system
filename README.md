@@ -1,6 +1,6 @@
 # Clinician-Calibrated Rehabilitation Quality and Progression System
 
-> 🌐 **Live Clinician Portal (Works 24/7)**: **[https://devariwala2712.github.io/Clinical-intelligence-system/](https://devariwala2712.github.io/Clinical-intelligence-system/)**  
+> 🌐 **Live Clinician Portal (Works 24/7)**: **[https://suryansh98741.github.io/Clinical-intelligence-system/](https://suryansh98741.github.io/Clinical-intelligence-system/)**  
 > Access the live interactive dashboard from any web browser without needing to run a local development environment.  
 > **Pre-loaded Demo Login**: Email: `clinician@demo.com` | Password: `DemoPass123`
 
