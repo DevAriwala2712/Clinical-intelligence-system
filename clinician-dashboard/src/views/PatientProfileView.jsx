@@ -39,14 +39,16 @@ export default function PatientProfileView({ token, patientId, onSelectPatient, 
         api.getPatientProgress(token, id).catch(() => null),
         api.getPatientSessions(token, id).catch(() => []),
       ]);
-      setPatientData(detail);
+      const patientObj = detail?.patient || detail || {};
+      const activeProg = detail?.activeProgram || null;
+      setPatientData({ patient: patientObj, activeProgram: activeProg });
       setProgressData(progress);
-      setSessions(sessionList);
+      setSessions(sessionList || []);
       setProfileForm({
-        rehabGoal: detail.patient?.rehabGoal || '',
-        injuryHistory: detail.patient?.injuryHistory || '',
-        age: detail.patient?.age || '',
-        heightCm: detail.patient?.heightCm || '',
+        rehabGoal: patientObj.rehabGoal || patientObj.rehab_goal || '',
+        injuryHistory: patientObj.injuryHistory || patientObj.injury_history || '',
+        age: patientObj.age || '',
+        heightCm: patientObj.heightCm || patientObj.height_cm || '',
       });
     } catch (err) {
       setError(err.message || 'Failed to load patient records');

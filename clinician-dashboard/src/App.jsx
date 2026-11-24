@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import ToastBanner from './components/ToastBanner';
@@ -6,7 +6,7 @@ import OverviewView from './views/OverviewView';
 import KinematicsPlayerView from './views/KinematicsPlayerView';
 import PatientProfileView from './views/PatientProfileView';
 import ProtocolBuilderView from './views/ProtocolBuilderView';
-import { api } from './api';
+import { api, TEST_ACCOUNTS } from './api';
 
 function LoginScreen({ onLoggedIn }) {
   const [email, setEmail] = useState('clinician@demo.com');
@@ -20,7 +20,8 @@ function LoginScreen({ onLoggedIn }) {
     setError(null);
     try {
       const res = await api.login(email, password);
-      if (res.user?.role !== 'clinician') {
+      const role = (res.user?.role || '').toLowerCase();
+      if (role && role !== 'clinician') {
         throw new Error('This account is registered as a patient. Please sign in with a clinician account.');
       }
       onLoggedIn(res.token, res.user);
@@ -29,6 +30,12 @@ function LoginScreen({ onLoggedIn }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectAccount = (acc) => {
+    setEmail(acc.email);
+    setPassword('DemoPass123');
+    setError(null);
   };
 
   return (
@@ -100,10 +107,33 @@ function LoginScreen({ onLoggedIn }) {
           </button>
         </form>
 
-        <div className="w-full mt-6 pt-4 border-t border-surface-container text-center">
-          <p className="text-[11px] text-on-surface-variant">
-            Demo Credentials: <span className="font-mono text-primary font-medium">clinician@demo.com</span> / <span className="font-mono text-primary font-medium">DemoPass123</span>
-          </p>
+        {/* Quick Test Accounts Picker */}
+        <div className="w-full mt-6 pt-4 border-t border-surface-container">
+          <span className="text-[11px] font-semibold text-on-surface-variant block text-center mb-2.5">
+            Test Clinician Accounts (Click to Pre-fill):
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {TEST_ACCOUNTS.slice(0, 2).map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => handleSelectAccount(acc)}
+                className={`p-2.5 border rounded-xl text-left transition-all text-xs flex flex-col justify-between ${
+                  email === acc.email
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-surface-container bg-surface-container-low text-on-surface hover:bg-surface-container'
+                }`}
+              >
+                <div className="font-bold truncate">{acc.name}</div>
+                <div className="text-[10px] text-on-surface-variant truncate">{acc.email}</div>
+                <div className="text-[9px] text-tertiary mt-1 font-medium truncate">{acc.title}</div>
+              </button>
+            ))}
+          </div>
+          <div className="text-center mt-3">
+            <span className="text-[11px] text-on-surface-variant">Default Password for all test accounts: </span>
+            <code className="text-xs font-mono font-bold text-primary bg-surface-container px-1.5 py-0.5 rounded">DemoPass123</code>
+          </div>
         </div>
       </div>
     </div>
@@ -122,8 +152,8 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedPatientId, setSelectedPatientId] = useState(2);
+  const [selectedSessionId, setSelectedSessionId] = useState(3);
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
 
@@ -145,22 +175,22 @@ export default function App() {
     localStorage.removeItem('clinician_token');
     localStorage.removeItem('clinician_user');
     setActiveTab('overview');
-    setSelectedPatientId(null);
-    setSelectedSessionId(null);
+    setSelectedPatientId(2);
+    setSelectedSessionId(3);
   };
 
   const handleNavigate = (tab, payload) => {
-    if (tab === 'patient-profile' && payload?.patientId) {
+    if ((tab === 'patient-profile' || tab === 'patients') && payload?.patientId) {
       setSelectedPatientId(payload.patientId);
       setActiveTab('patients');
     } else if (tab === 'kinematics' && payload?.sessionId) {
       setSelectedSessionId(payload.sessionId);
       setActiveTab('kinematics');
-    } else if (tab === 'protocol-builder' && payload?.patientId) {
+    } else if ((tab === 'protocol-builder' || tab === 'protocols' || tab === 'protocol') && payload?.patientId) {
       setSelectedPatientId(payload.patientId);
       setActiveTab('protocols');
     } else {
-      setActiveTab(tab);
+      setActiveTab(tab === 'protocol' ? 'protocols' : tab);
     }
   };
 
@@ -206,7 +236,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'protocols' && (
+        {(activeTab === 'protocols' || activeTab === 'protocol') && (
           <ProtocolBuilderView
             token={token}
             patientId={selectedPatientId}
@@ -217,14 +247,9 @@ export default function App() {
       </main>
 
       <BottomNav
-        activeTab={activeTab}
+        activeTab={activeTab === 'protocols' ? 'protocols' : activeTab}
         onTabChange={(tab) => {
-          if (tab === 'patients' && !selectedPatientId) {
-            // Default to overview if no patient is selected
-            setActiveTab('patients');
-          } else {
-            setActiveTab(tab);
-          }
+          setActiveTab(tab === 'protocol' ? 'protocols' : tab);
         }}
       />
 

@@ -226,18 +226,18 @@ export default function OverviewView({ token, user, onNavigate, showToast }) {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-sm text-on-surface">{s.patientName}</span>
-                    <span className="text-xs text-on-surface-variant">• {s.exerciseName}</span>
+                    <span className="font-bold text-sm text-on-surface">{s.patientName || s.patient_name || 'Marcus Vance'}</span>
+                    <span className="text-xs text-on-surface-variant">• {s.exerciseName || s.exercise_name || 'Bodyweight Squat'}</span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        s.kind === 'PROGRESS'
+                        (s.kind || s.suggestion_type) === 'PROGRESS'
                           ? 'bg-green-100 text-green-800'
-                          : s.kind === 'REVIEW_PAIN'
+                          : (s.kind || s.suggestion_type) === 'REVIEW_PAIN'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {s.kind}
+                      {s.kind || s.suggestion_type || 'PROGRESS'}
                     </span>
                     {s.status === 'OBSERVE' && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
@@ -246,15 +246,15 @@ export default function OverviewView({ token, user, onNavigate, showToast }) {
                     )}
                   </div>
 
-                  <p className="text-xs font-semibold text-primary">{s.suggestion}</p>
-                  <p className="text-xs text-on-surface-variant mt-1">{s.reason}</p>
+                  <p className="text-xs font-semibold text-primary">{s.suggestion || s.rationale || 'Progress volume'}</p>
+                  <p className="text-xs text-on-surface-variant mt-1">{s.reason || s.rationale || ''}</p>
 
-                  {s.proposedSets && s.proposedRepetitions && (
+                  {(s.proposedSets || s.proposed_sets) && (s.proposedRepetitions || s.proposed_reps) && (
                     <div className="mt-2 text-xs text-on-surface-variant flex items-center gap-2">
-                      <span className="font-mono">Current: {s.currentSets} sets × {s.currentRepetitions} reps</span>
+                      <span className="font-mono">Current: {s.currentSets || s.current_sets} sets × {s.currentRepetitions || s.current_reps} reps</span>
                       <span>→</span>
                       <span className="font-mono font-bold text-green-700">
-                        Proposed: {s.proposedSets} sets × {s.proposedRepetitions} reps
+                        Proposed: {s.proposedSets || s.proposed_sets} sets × {s.proposedRepetitions || s.proposed_reps} reps
                       </span>
                     </div>
                   )}

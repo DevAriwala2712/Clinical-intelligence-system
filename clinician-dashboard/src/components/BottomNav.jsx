@@ -5,7 +5,7 @@ export default function BottomNav({ activeTab, onTabChange }) {
     { id: 'overview', label: 'Overview', icon: 'dashboard' },
     { id: 'patients', label: 'Patients', icon: 'vital_signs' },
     { id: 'kinematics', label: 'Kinematics', icon: 'motion_photos_on' },
-    { id: 'protocol', label: 'Protocol', icon: 'tune' },
+    { id: 'protocols', label: 'Protocol', icon: 'tune' },
   ];
 
   return (

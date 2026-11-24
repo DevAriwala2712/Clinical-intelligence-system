@@ -19,7 +19,8 @@ export default function LandmarkSkeleton({ points }) {
 
   const byLandmark = {};
   for (const p of points) {
-    (byLandmark[p.landmark_name] ||= []).push(p);
+    const key = p.landmark_name || p.landmarkName || 'point';
+    (byLandmark[key] ||= []).push(p);
   }
 
   const colors = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed'];
@@ -29,7 +30,7 @@ export default function LandmarkSkeleton({ points }) {
     <div className="landmark-skeleton">
       <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
         {names.map((name, i) => {
-          const framePoints = byLandmark[name].sort((a, b) => a.timestamp_ms - b.timestamp_ms);
+          const framePoints = byLandmark[name].sort((a, b) => (a.timestamp_ms || a.timestampMs || 0) - (b.timestamp_ms || b.timestampMs || 0));
           const color = colors[i % colors.length];
           const pathD = framePoints
             .map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${scaleX(p.x)} ${scaleY(p.y)}`)
